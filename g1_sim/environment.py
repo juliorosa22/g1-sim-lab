@@ -2,6 +2,7 @@
 import omni.usd
 from isaacsim.core.utils.nucleus import get_assets_root_path
 from isaacsim.core.utils.stage import add_reference_to_stage
+from pxr import UsdLux
 
 from .config import GroundConfig, RoomConfig
 from .stage_utils import print_room_bounding_boxes
@@ -63,9 +64,20 @@ class FlatGroundEnvironment:
             size=cfg.size,
             physics_material=material,
         )
+
+        # Simple_Room's USD shipped its own lights (visible as "Stage Lights" in
+        # the viewport); a bare ground plane has none, so without this the scene
+        # renders solid black under RTX even though the geometry is present --
+        # UsdLux is standard USD schema (same tier as the UsdGeom.Camera.Define
+        # already used in sensors/camera.py), not an Isaac Sim-specific API.
+        stage = omni.usd.get_context().get_stage()
+        dome_light = UsdLux.DomeLight.Define(stage, "/World/Lights/DomeLight")
+        dome_light.CreateIntensityAttr(1000.0)
+
         sim.update()
         print(
             f"Flat ground plane created at z={cfg.z_position} with "
             f"static_friction={cfg.static_friction}, dynamic_friction={cfg.dynamic_friction}, "
             f"restitution={cfg.restitution}"
         )
+        print("Dome light added at /World/Lights/DomeLight (Simple_Room's own lights aren't present here)")
