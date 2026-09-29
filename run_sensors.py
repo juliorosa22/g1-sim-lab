@@ -69,6 +69,13 @@ def main():
     articulation = SingleArticulation(prim_path=config.robot.prim_path)
     articulation.initialize()
 
+    # Articulation root properties Isaac Lab's own config sets for this exact
+    # USD (G129_CFG_WITH_INSPIRE_WHOLEBODY) but our raw-load script never has --
+    # see RobotConfig for why these matter.
+    articulation.set_solver_position_iteration_count(config.robot.solver_position_iteration_count)
+    articulation.set_solver_velocity_iteration_count(config.robot.solver_velocity_iteration_count)
+    articulation.set_enabled_self_collisions(config.robot.enable_self_collisions)
+
     # The robot may have already sagged/toppled during the physics ticks above,
     # under the USD's original weak gains -- re-snap the base before applying
     # the standing pose, so StandingController starts from a clean state rather

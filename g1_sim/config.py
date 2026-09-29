@@ -104,6 +104,16 @@ class RobotConfig:
     # earlier fix that reset only position failed to correct a robot that had
     # already toppled during the pre-standing-pose physics window.
     spawn_orientation_wxyz: Tuple[float, float, float, float] = (1.0, 0.0, 0.0, 0.0)
+    # Articulation root properties from unitree_sim_isaaclab's own
+    # G129_CFG_WITH_INSPIRE_WHOLEBODY (robots/unitree.py, articulation_props=
+    # ArticulationRootPropertiesCfg(...)) -- never applied by our script before,
+    # since we load via raw add_reference_to_stage rather than Isaac Lab's own
+    # scene setup. For a 53-DOF articulation with tight-clearance parts (fingers,
+    # feet), Isaac Sim's defaults for these may differ enough to destabilize an
+    # otherwise correctly-posed, upright robot over a few seconds.
+    solver_position_iteration_count: int = 4
+    solver_velocity_iteration_count: int = 1
+    enable_self_collisions: bool = False
 
 
 @dataclass

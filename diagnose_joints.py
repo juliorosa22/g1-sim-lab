@@ -52,20 +52,25 @@ def main():
     props = articulation.dof_properties
     state = articulation.get_joints_state()
 
-    print(f"{'joint':30s} {'pos(rad)':>10s} {'stiffness':>12s} {'damping':>10s} {'driveMode':>10s}")
+    print(f"{'joint':30s} {'pos(rad)':>10s} {'stiffness':>12s} {'damping':>10s} {'maxEffort':>10s} {'driveMode':>10s}")
     for i, name in enumerate(names):
         print(
             f"{name:30s} {state.positions[i]:10.4f} "
-            f"{props['stiffness'][i]:12.2f} {props['damping'][i]:10.2f} {props['driveMode'][i]:10d}"
+            f"{props['stiffness'][i]:12.2f} {props['damping'][i]:10.2f} "
+            f"{props['maxEffort'][i]:10.2f} {props['driveMode'][i]:10d}"
         )
 
     stiffness = props["stiffness"]
     damping = props["damping"]
+    max_effort = props["maxEffort"]
     print()
     print(f"num DOF: {len(names)}")
     print(f"stiffness: min={stiffness.min():.2f} max={stiffness.max():.2f} mean={stiffness.mean():.2f}")
     print(f"damping:   min={damping.min():.2f} max={damping.max():.2f} mean={damping.mean():.2f}")
+    print(f"maxEffort: min={max_effort.min():.2f} max={max_effort.max():.2f} mean={max_effort.mean():.2f}")
     print(f"joints with zero stiffness: {(stiffness == 0).sum()} / {len(names)}")
+    print(f"joints with maxEffort < 50 N*m (legs need up to 139 per the real Isaac Lab config): "
+          f"{(max_effort < 50).sum()} / {len(names)}")
 
     timeline.stop()
     sim.close()
