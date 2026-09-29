@@ -32,7 +32,7 @@ import omni.timeline
 from isaacsim.core.prims import SingleArticulation
 
 from g1_sim.robot import G1Robot
-from g1_sim.environment import RoomEnvironment
+from g1_sim.environment import FlatGroundEnvironment, RoomEnvironment
 from g1_sim.sensors import LidarSensor, CameraSensor, ImuSensor
 from g1_sim.standing import StandingController
 
@@ -41,8 +41,14 @@ def main():
     robot = G1Robot(config.robot)
     robot.load(sim)
 
-    room = RoomEnvironment(config.room)
-    room.load(sim)
+    # config.use_flat_ground=True while validating standing (default) -- isolates
+    # the standing problem from Simple_Room's own uninspected floor material.
+    # Set it False in config.py once standing is confirmed, to go back to the room.
+    if config.use_flat_ground:
+        environment = FlatGroundEnvironment(config.ground)
+    else:
+        environment = RoomEnvironment(config.room)
+    environment.load(sim)
 
     robot.spawn(sim)
 

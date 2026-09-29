@@ -125,6 +125,28 @@ class RoomConfig:
 
 
 @dataclass
+class GroundConfig:
+    """A flat ground plane with fully-known physics properties, used in place of
+    Simple_Room while validating the standing pose -- isolates the standing
+    problem from Simple_Room's floor material, which we've never inspected and
+    don't control. static_friction/dynamic_friction=1.0 match the same real
+    unitree_sim_isaaclab task config that gave us the articulation solver
+    properties (self.sim.physics_material in
+    move_cylinder_g1_29dof_inspire_hw_env_cfg.py). restitution=0.0 overrides
+    isaacsim.core.api.objects.GroundPlane's own default of 0.8 (bouncy),
+    which is a bad match for a robot that's meant to stand still on contact.
+    """
+
+    prim_path: str = "/World/GroundPlane"
+    material_prim_path: str = "/World/Physics/GroundMaterial"
+    size: float = 50.0
+    z_position: float = 0.0
+    static_friction: float = 1.0
+    dynamic_friction: float = 1.0
+    restitution: float = 0.0
+
+
+@dataclass
 class StandingPoseConfig:
     """Standing joint targets and PD gains, transcribed from unitree_sim_isaaclab's
     own G129_CFG_WITH_INSPIRE_WHOLEBODY (robots/unitree.py) -- the real Isaac Lab
@@ -213,6 +235,12 @@ class SimulationConfig:
     headless: bool = False
     robot: RobotConfig = field(default_factory=RobotConfig)
     room: RoomConfig = field(default_factory=RoomConfig)
+    ground: GroundConfig = field(default_factory=GroundConfig)
+    # True while validating the standing pose: swaps Simple_Room for a flat
+    # ground plane with known friction (see GroundConfig), to isolate the
+    # standing problem from Simple_Room's own uninspected floor material.
+    # Set back to False once standing is confirmed, to test sensors in the room.
+    use_flat_ground: bool = True
     lidar: LidarConfig = field(default_factory=LidarConfig)
     camera: CameraConfig = field(default_factory=CameraConfig)
     imu: ImuConfig = field(default_factory=ImuConfig)
