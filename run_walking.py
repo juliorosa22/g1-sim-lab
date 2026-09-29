@@ -41,6 +41,14 @@ import omni.timeline
 from isaacsim.core.api import SimulationContext
 from isaacsim.core.prims import SingleArticulation
 
+# SimulationContext.instance() only returns something once a SimulationContext
+# has actually been constructed in this process -- SimulationApp() alone
+# doesn't create one, which is why the first version of this script saw
+# instance() come back None and silently fell back to an assumed 60Hz.
+# Constructing it here (before the robot/ground are loaded) also creates the
+# stage's physics scene if one doesn't already exist yet.
+sim_context = SimulationContext()
+
 from g1_sim.environment import FlatGroundEnvironment, RoomEnvironment
 from g1_sim.robot import G1Robot
 from g1_sim.standing import StandingController
@@ -96,16 +104,17 @@ def main():
 
     # Derive how many physics steps make up one 50Hz control period from the
     # stage's actual physics dt, rather than assuming it matches MuJoCo's
-    # simulation_dt=0.002 the reference config was written for.
+    # simulation_dt=0.002 the reference config was written for. sim_context
+    # was constructed at module load time (above) specifically so this
+    # instance() call resolves instead of returning None.
     try:
-        physics_dt = SimulationContext.instance().get_physics_dt()
-    except Exception as exc:  # pragma: no cover -- fallback for an unverified API path
+        physics_dt = sim_context.get_physics_dt()
+    except Exception as exc:  # pragma: no cover -- defensive fallback only
         physics_dt = 1.0 / 60.0
         print(
-            f"WARNING: could not read physics dt via SimulationContext ({exc}); "
+            f"WARNING: could not read physics dt from SimulationContext ({exc}); "
             f"assuming Isaac Sim's default {physics_dt:.5f}s (60Hz). If that's wrong, "
-            "the walking policy's control rate won't match its 50Hz training rate -- "
-            "run verify_walking_apis.py to check."
+            "the walking policy's control rate won't match its 50Hz training rate."
         )
 
     control_period_s = walking_config.simulation_dt * walking_config.control_decimation
