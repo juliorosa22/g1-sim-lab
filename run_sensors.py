@@ -27,6 +27,7 @@ enable_extension("isaacsim.sensors.physics")
 enable_extension("isaacsim.ros2.bridge")
 sim.update()
 
+import numpy as np
 import omni.timeline
 from isaacsim.core.prims import SingleArticulation
 
@@ -67,6 +68,15 @@ def main():
 
     articulation = SingleArticulation(prim_path=config.robot.prim_path)
     articulation.initialize()
+
+    # The robot may have already sagged/toppled during the physics ticks above,
+    # under the USD's original weak gains -- re-snap the base before applying
+    # the standing pose, so StandingController starts from a clean state rather
+    # than correcting a fall already in progress.
+    robot.spawn(sim)
+    articulation.set_linear_velocity(np.zeros(3))
+    articulation.set_angular_velocity(np.zeros(3))
+
     StandingController(articulation, config.standing).apply()
 
     print("Publishing:")
