@@ -51,16 +51,27 @@ class G1Robot:
 
         return stage
 
-    def spawn(self, sim, position=None):
-        """Move the robot to a spawn point clear of room furniture.
+    def spawn(self, sim, position=None, orientation=None):
+        """Move the robot to a spawn point clear of room furniture, upright.
 
         Uses SingleXFormPrim.set_world_pose rather than adding a raw xform op --
         it correctly handles a prim that may already carry xform ops from its
         source USD, instead of risking a duplicate/conflicting op.
+
+        Always passes orientation explicitly (scalar-first w,x,y,z, confirmed
+        from single_prim_wrapper.py) -- set_world_pose leaves orientation
+        UNCHANGED when it's omitted, so calling this again to "re-snap" a
+        robot that already toppled would otherwise silently keep the fallen
+        orientation while only fixing position.
         """
         from isaacsim.core.prims import SingleXFormPrim
 
         spawn_position = np.array(position if position is not None else self.config.spawn_position)
-        SingleXFormPrim(self.config.prim_path).set_world_pose(position=spawn_position)
+        spawn_orientation = np.array(
+            orientation if orientation is not None else self.config.spawn_orientation_wxyz
+        )
+        SingleXFormPrim(self.config.prim_path).set_world_pose(
+            position=spawn_position, orientation=spawn_orientation
+        )
         sim.update()
-        print(f"G1 spawned at: {spawn_position}")
+        print(f"G1 spawned at: {spawn_position}, orientation(wxyz)={spawn_orientation}")

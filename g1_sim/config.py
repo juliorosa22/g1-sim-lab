@@ -97,6 +97,13 @@ class RobotConfig:
     # (robots/unitree.py); the bent-knee standing pose in StandingPoseConfig
     # needs that base height for the feet to land on the floor correctly.
     spawn_position: Tuple[float, float, float] = (2.0, 2.0, 0.80)
+    # Upright, scalar-first (w,x,y,z) -- confirmed convention from
+    # isaacsim.core.prims's SingleXFormPrim.set_world_pose (single_prim_wrapper.py).
+    # Must be passed explicitly on every re-spawn: set_world_pose leaves
+    # orientation UNCHANGED when this argument is omitted, which is why an
+    # earlier fix that reset only position failed to correct a robot that had
+    # already toppled during the pre-standing-pose physics window.
+    spawn_orientation_wxyz: Tuple[float, float, float, float] = (1.0, 0.0, 0.0, 0.0)
 
 
 @dataclass
