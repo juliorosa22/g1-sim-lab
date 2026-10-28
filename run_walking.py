@@ -18,11 +18,25 @@ once -- one frame-convention assumption in g1_walking/base_state.py (world
 vs. body frame for the base angular velocity) couldn't be checked against
 your installed isaacsim source from this dev container.
 """
+import argparse
+
 from g1_sim.config import SimulationConfig
 from g1_walking.config import WalkingPolicyConfig
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--seconds", type=float, default=None,
+                    help="stop after this much sim time and print a pass/fail summary")
+parser.add_argument("--headless", action="store_true", help="override config.headless")
+parser.add_argument("--cmd", type=float, nargs=3, metavar=("VX", "VY", "YAW"), default=None,
+                    help="override the velocity command")
+args, _ = parser.parse_known_args()
+
 config = SimulationConfig()
+if args.headless:
+    config.headless = True
 walking_config = WalkingPolicyConfig()
+if args.cmd is not None:
+    walking_config.cmd = tuple(args.cmd)
 
 from isaacsim import SimulationApp
 
@@ -47,14 +61,16 @@ from isaacsim.core.prims import SingleArticulation
 # instance() come back None and silently fell back to an assumed 60Hz.
 # Constructing it here (before the robot/ground are loaded) also creates the
 # stage's physics scene if one doesn't already exist yet.
-sim_context = SimulationContext()
+sim_context = SimulationContext(
+    physics_dt=walking_config.physics_dt, rendering_dt=walking_config.physics_dt
+)
 
 from g1_sim.environment import FlatGroundEnvironment, RoomEnvironment
 from g1_sim.robot import G1Robot
 from g1_sim.standing import StandingController
 from g1_walking.base_state import BaseState
 from g1_walking.leg_controller import LegController
-from g1_walking.observation import ObservationBuilder
+from g1_walking.observation import ObservationBuilder, quat_rotate_inverse
 from g1_walking.policy import WalkingPolicy
 
 
@@ -125,6 +141,21 @@ def main():
     )
     print(f"Starting walking policy control loop (cmd={walking_config.cmd} [vx, vy, yaw_rate])...")
 
+    # Telemetry: a fall is the base dropping well below its standing height or
+    # tilting far from upright (gravity-z in body frame is -1 when upright).
+    FALL_HEIGHT_M = 0.4
+    FALL_TILT_GZ = -0.5
+    LOG_EVERY_S = 0.5
+    pos0, _ = articulation.get_world_pose()
+    start_z = float(pos0[2])
+    start_xy = np.array(pos0[:2], dtype=np.float64)
+    fell_at = None
+    sim_time = 0.0
+    next_log = 0.0
+    max_tilt_gz = -1.0
+    print(f"start base height z={start_z:.3f} m")
+    print(f"{'t(s)':>6} {'z(m)':>6} {'gz':>6} {'v_fwd':>6} {'v_lat':>6} {'|w|':>6} {'dist':>6} {'|a|max':>6}")
+
     step_count = 0
     try:
         while True:
@@ -144,9 +175,32 @@ def main():
                 obs_builder.record_action(action)
                 target = action * walking_config.action_scale + np.array(walking_config.default_angles)
                 leg_controller.apply(target)
+
+                sim_time += control_period_s
+                pos, _ = articulation.get_world_pose()
+                gz = float(obs[5])
+                max_tilt_gz = max(max_tilt_gz, gz)
+                if fell_at is None and (pos[2] < FALL_HEIGHT_M or gz > FALL_TILT_GZ):
+                    fell_at = sim_time
+                    print(f"*** FALL detected at t={sim_time:.2f}s (z={pos[2]:.3f}, gz={gz:.2f})")
+                if sim_time >= next_log:
+                    next_log += LOG_EVERY_S
+                    v_body = quat_rotate_inverse(quat_wxyz, np.asarray(articulation.get_linear_velocity(), dtype=np.float64))
+                    dist = float(np.linalg.norm(np.array(pos[:2]) - start_xy))
+                    print(f"{sim_time:6.2f} {pos[2]:6.3f} {gz:6.2f} {v_body[0]:6.2f} {v_body[1]:6.2f} "
+                          f"{np.linalg.norm(ang_vel_body):6.2f} {dist:6.2f} {np.abs(action).max():6.2f}")
+                if fell_at is not None and args.seconds is not None:
+                    break
+                if args.seconds is not None and sim_time >= args.seconds:
+                    break
     except KeyboardInterrupt:
         pass
     finally:
+        pos, _ = articulation.get_world_pose()
+        dist = float(np.linalg.norm(np.array(pos[:2]) - start_xy))
+        verdict = "FELL" if fell_at is not None else "STAYED UPRIGHT"
+        print(f"=== {verdict} | sim_time={sim_time:.1f}s distance={dist:.2f}m "
+              f"avg_speed={dist / max(sim_time, 1e-6):.2f}m/s (cmd vx={walking_config.cmd[0]}) ===")
         timeline.stop()
         sim.close()
 

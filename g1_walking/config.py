@@ -80,3 +80,9 @@ class WalkingPolicyConfig:
     # than assuming these two values directly translate.
     simulation_dt: float = 0.002
     control_decimation: int = 10
+
+    # Physics dt run_walking.py constructs the SimulationContext with. Isaac
+    # Sim's default (1/60 s) makes round(0.02 / dt) = 1, i.e. a 60Hz policy --
+    # 20% faster than the 50Hz it was trained at. 0.005 s gives exactly 4
+    # physics steps per 0.02 s control period.
+    physics_dt: float = 0.005
