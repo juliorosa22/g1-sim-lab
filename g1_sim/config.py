@@ -17,7 +17,7 @@ from typing import Tuple
 # Falls back to the desktop's path if the env var isn't set, so existing desktop
 # runs keep working unchanged.
 _DEFAULT_USD_PATH = (
-    "/home/cesar/Programming/UnitreeG1/unitree_sim_isaaclab/assets/robots/"
+    "/home/julio/Programming/UnitreeRobot/unitree_sim_isaaclab/assets/robots/"
     "g1-29dof_wholebody_inspire/g1_29dof_with_inspire_rev_1_0.usd"
 )
 
