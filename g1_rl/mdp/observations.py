@@ -2,6 +2,7 @@
 import torch
 
 from isaaclab.envs import ManagerBasedRLEnv
+from isaaclab.managers import SceneEntityCfg
 
 
 def gait_phase(env: ManagerBasedRLEnv, period_s: float) -> torch.Tensor:
@@ -15,3 +16,13 @@ def gait_phase(env: ManagerBasedRLEnv, period_s: float) -> torch.Tensor:
     phase = (t % period_s) / period_s
     angle = 2.0 * torch.pi * phase
     return torch.stack((torch.sin(angle), torch.cos(angle)), dim=-1)
+
+
+def joint_pos_rel_biased(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Joint positions relative to default, plus the per-env encoder bias drawn by
+    g1_rl.mdp.events.randomize_encoder_bias (zero until that startup event ran)."""
+    asset = env.scene[asset_cfg.name]
+    ids = asset_cfg.joint_ids
+    q = asset.data.joint_pos[:, ids] - asset.data.default_joint_pos[:, ids]
+    bias = getattr(env, "encoder_bias", None)
+    return q if bias is None else q + bias

@@ -36,6 +36,9 @@ LEG_JOINT_NAMES = (
     "right_knee_joint", "right_ankle_pitch_joint", "right_ankle_roll_joint",
 )
 
+# Ankle torque limit is 50 N*m: mjlab (2 x 25 N*m motors through the 4-bar
+# linkage) and mujoco_playground (+-50) agree; the sim config's 35 was too low.
+
 # Max command delay in physics steps (dt=0.005 s -> 4 steps = 20 ms, i.e. one
 # control step). Placeholder range, to be widened once training is stable.
 MAX_ACTUATOR_DELAY_STEPS = 4
@@ -85,12 +88,12 @@ G1_INSPIRE_CFG = ArticulationCfg(
             effort_limit={
                 ".*_hip_yaw_joint": 88.0, ".*_hip_roll_joint": 139.0,
                 ".*_hip_pitch_joint": 88.0, ".*_knee_joint": 139.0,
-                ".*_ankle_pitch_joint": 35.0, ".*_ankle_roll_joint": 35.0,
+                ".*_ankle_pitch_joint": 50.0, ".*_ankle_roll_joint": 50.0,
             },
             effort_limit_sim={
                 ".*_hip_yaw_joint": 88.0, ".*_hip_roll_joint": 139.0,
                 ".*_hip_pitch_joint": 88.0, ".*_knee_joint": 139.0,
-                ".*_ankle_pitch_joint": 35.0, ".*_ankle_roll_joint": 35.0,
+                ".*_ankle_pitch_joint": 50.0, ".*_ankle_roll_joint": 50.0,
             },
             velocity_limit={
                 ".*_hip_yaw_joint": 32.0, ".*_hip_roll_joint": 20.0,

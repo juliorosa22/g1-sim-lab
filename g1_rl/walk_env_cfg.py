@@ -67,7 +67,7 @@ class ObservationsCfg:
             func=mdp.generated_commands, scale=(2.0, 2.0, 0.25), params={"command_name": "base_velocity"}
         )
         joint_pos = ObsTerm(
-            func=mdp.joint_pos_rel, params={"asset_cfg": _legs()}, noise=Unoise(n_min=-0.01, n_max=0.01)
+            func=mdp.joint_pos_rel_biased, params={"asset_cfg": _legs()}, noise=Unoise(n_min=-0.01, n_max=0.01)
         )
         joint_vel = ObsTerm(
             func=mdp.joint_vel_rel, scale=0.05, params={"asset_cfg": _legs()}, noise=Unoise(n_min=-1.5, n_max=1.5)
@@ -173,8 +173,8 @@ class EventCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.6, 1.2),
-            "dynamic_friction_range": (0.5, 1.0),
+            "static_friction_range": (0.3, 1.2),
+            "dynamic_friction_range": (0.25, 1.0),
             "restitution_range": (0.0, 0.1),
             "num_buckets": 64,
         },
@@ -184,7 +184,7 @@ class EventCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
-            "mass_distribution_params": (-3.0, 3.0),
+            "mass_distribution_params": (-5.0, 5.0),
             "operation": "add",
         },
     )
@@ -201,10 +201,15 @@ class EventCfg:
         mode="startup",
         params={
             "asset_cfg": _legs(),
-            "stiffness_distribution_params": (0.85, 1.15),
-            "damping_distribution_params": (0.85, 1.15),
+            "stiffness_distribution_params": (0.8, 1.2),
+            "damping_distribution_params": (0.8, 1.2),
             "operation": "scale",
         },
+    )
+    encoder_bias = EventTerm(
+        func=mdp.randomize_encoder_bias,
+        mode="startup",
+        params={"asset_cfg": _legs(), "bias_range": (-0.015, 0.015)},
     )
     joint_armature = EventTerm(
         func=mdp.randomize_joint_parameters,
@@ -242,8 +247,8 @@ class EventCfg:
     push_robot = EventTerm(
         func=mdp.push_by_setting_velocity,
         mode="interval",
-        interval_range_s=(8.0, 12.0),
-        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
+        interval_range_s=(3.0, 6.0),
+        params={"velocity_range": {"x": (-0.7, 0.7), "y": (-0.7, 0.7)}},
     )
 
 
@@ -262,8 +267,17 @@ class G1WalkEnvCfg(LocomotionVelocityRoughEnvCfg):
         # USD's root is "pelvis" and the flat task has no terrain to scan.
         self.scene.height_scanner = None
 
-        self.commands.base_velocity.debug_vis = False
-        self.commands.base_velocity.rel_standing_envs = 0.1
-        self.commands.base_velocity.ranges.lin_vel_x = (0.0, 1.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.5, 0.5)
-        self.commands.base_velocity.ranges.ang_vel_z = (-1.0, 1.0)
+        # Replaces the stock term: mixes in forward-only / sideways-only /
+        # rotate-in-place commands (see mdp/commands.py), resamples every 3-8 s
+        # (stock: 10 s, i.e. two commands per episode), allows slow backward
+        # walking, and samples yaw rate directly instead of via a heading target.
+        self.commands.base_velocity = mdp.MixedVelocityCommandCfg(
+            asset_name="robot",
+            resampling_time_range=(3.0, 8.0),
+            rel_standing_envs=0.1,
+            heading_command=False,
+            debug_vis=False,
+            ranges=mdp.UniformVelocityCommandCfg.Ranges(
+                lin_vel_x=(-0.4, 1.0), lin_vel_y=(-0.5, 0.5), ang_vel_z=(-1.0, 1.0), heading=(-math.pi, math.pi)
+            ),
+        )

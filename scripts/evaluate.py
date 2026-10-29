@@ -52,6 +52,7 @@ from g1_rl.walk_env_cfg import EventCfg
 
 COMMANDS = [
     (0.0, 0.0, 0.0),
+    (-0.3, 0.0, 0.0),
     (0.3, 0.0, 0.0),
     (0.5, 0.0, 0.0),
     (0.8, 0.0, 0.0),
@@ -72,6 +73,7 @@ def main():
     # Fixed, repeatable commands: no heading controller, no standing envs, no resampling.
     cmd_cfg = env_cfg.commands.base_velocity
     cmd_cfg.heading_command = False
+    cmd_cfg.mixed_sampling = False
     cmd_cfg.rel_standing_envs = 0.0
     cmd_cfg.resampling_time_range = (1.0e9, 1.0e9)
     env_cfg.episode_length_s = args.seconds + 1.0  # no time-out inside the measured window
