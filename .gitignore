@@ -6,3 +6,6 @@ __pycache__/
 *.usd
 *.usda
 *.usdc
+
+# local credentials (lab machine)
+.env
