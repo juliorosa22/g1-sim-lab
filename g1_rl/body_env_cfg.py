@@ -132,3 +132,63 @@ class G1WalkArmsEnvCfg_PLAY(G1WalkArmsEnvCfg):
         self.scene.env_spacing = 2.5
         self.observations.policy.enable_corruption = False
         self.events.push_robot = None
+
+
+# ---------------------------------------------------------------------------------------
+# v5: v4 (waist driven, arms randomised, all 29 joints observed) + "stand still, no stepping"
+# ---------------------------------------------------------------------------------------
+STAND_DEADBAND = 0.05  # m/s and rad/s: commands inside this are "stand still"
+
+
+@configclass
+class G1WalkStandEnvCfg(G1WalkArmsEnvCfg):
+    """What v2-v4 got wrong: at zero command they step in place and drift (scripts/
+    evaluate_standing.py: 0-7% of envs still, ~4 foot lifts/s, ~3 cm/s drift). Reasons
+    and fixes:
+      * the velocity-tracking reward is flat near zero        -> stand-still rewards (below)
+      * nothing penalised lifting a foot while idle           -> stand_feet_air
+      * an always-running gait clock invites stepping         -> clock frozen at zero command
+      * only 10% of commands were "stand"                     -> 30%
+      * tiny planner commands would trigger walking           -> deadband
+    """
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        # gait clock only runs while a velocity is commanded (policy and critic)
+        for group in (self.observations.policy, self.observations.critic):
+            group.gait_phase.func = mdp.gait_phase_gated
+            group.gait_phase.params = {
+                "period_s": 0.8, "command_name": "base_velocity", "deadband": STAND_DEADBAND,
+            }
+
+        # more standing, and a deadband that makes "nearly zero" exactly zero
+        cmd = self.commands.base_velocity
+        cmd.rel_standing_envs = 0.3
+        cmd.deadband = STAND_DEADBAND
+
+        # arm goals: also hold corner poses (both arms far forward, etc.) for a while
+        self.commands.arm_pose.p_extreme = 0.2
+
+        std = {"command_name": "base_velocity", "deadband": STAND_DEADBAND}
+        robot = SceneEntityCfg("robot")
+        r = self.rewards
+        r.stand_still_exp = RewTerm(func=mdp.stand_still_exp, weight=1.0, params={**std, "std": 0.05, "asset_cfg": robot})
+        r.stand_speed_l1 = RewTerm(func=mdp.stand_speed_l1, weight=-2.0, params={**std, "asset_cfg": robot})
+        r.stand_feet_air = RewTerm(
+            func=mdp.stand_feet_air, weight=-1.0,
+            params={**std, "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_ankle_roll_link")},
+        )
+        r.stand_joint_vel_l2 = RewTerm(func=mdp.stand_joint_vel_l2, weight=-0.01, params={**std, "asset_cfg": _joints(CONTROLLED)})
+        r.stand_pose_l1 = RewTerm(func=mdp.stand_pose_l1, weight=-0.3, params={**std, "asset_cfg": _joints(CONTROLLED)})
+        r.stand_action_rate_l2 = RewTerm(func=mdp.stand_action_rate_l2, weight=-0.3, params=dict(std))
+
+
+@configclass
+class G1WalkStandEnvCfg_PLAY(G1WalkStandEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.scene.num_envs = 50
+        self.scene.env_spacing = 2.5
+        self.observations.policy.enable_corruption = False
+        self.events.push_robot = None

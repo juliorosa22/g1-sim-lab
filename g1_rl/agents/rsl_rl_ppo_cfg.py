@@ -51,3 +51,11 @@ class G1WalkArmsPPORunnerCfg(G1WalkFlatPPORunnerCfg):
         super().__post_init__()
         self.experiment_name = "g1_walk_flat_inspire_arms"
         self.max_iterations = 3000
+
+
+@configclass
+class G1WalkStandPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_walk_flat_inspire_stand"
+        self.max_iterations = 3000
