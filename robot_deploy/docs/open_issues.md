@@ -19,8 +19,18 @@ The legs match exactly. Waist and arms do not:
 | wrist roll, pitch, yaw | 40 / 2 | **20 / 1** |
 | shoulders, elbow | 100/2 pitch, roll; 50/2 yaw, elbow | same |
 
-The walking policy actively drives the waist (v4), so the waist gain difference is a real sim-to-real error.
-Decide which values the robot will run and, if they differ from training, re-train or at least evaluate in simulation with them.
+Where these numbers come from: our values were copied from `unitree_sim_isaaclab`'s simulation config; Unitree's are the gains its
+`deploy_real` script uses to hold the waist and arms at fixed targets while its 12-joint leg policy runs. Neither set was validated for a
+policy that DRIVES the waist (our v3/v4 do). So this is a decision, not a proven error: either run 200/5 as trained (and check it is
+safe on the real robot) or evaluate/retrain in simulation at 300/3. The joint attribution of Unitree's 7-value arm vectors assumes
+the order shoulder pitch, roll, yaw, elbow, wrist roll, pitch, yaw, which matches the SDK's `G1JointIndex` for the left arm (15-21);
+the right arm (22-28) was not read.
+
+## Is the waist usable on this robot?
+Unitree's SDK example marks `WaistRoll` and `WaistPitch` (motors 13, 14) as **"INVALID for g1 23dof/29dof with waist locked"**.
+Our walking policy v4 (and v3) commands all three waist joints. Find out whether THIS unit's waist roll/pitch are unlocked and
+actuated. If they are locked, those two outputs must be held at default and v3/v4 would need retraining without them.
+(`unitree_sdk2_python/example/g1/high_level/g1_arm7_sdk_dds_example.py`, class `G1JointIndex`.)
 
 ## Policies: known behaviour (simulation only)
 - Walking policy (v4): steps in place at zero command (about 4 foot lifts/s, ~3 cm/s drift) and never has a slow-walk gait;
