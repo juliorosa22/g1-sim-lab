@@ -1,0 +1,101 @@
+# Deployment contract for the G1 walk/stand controller (g1_rl policies v4 "walk" and v1 "stand").
+#
+# Sources: g1_rl/robot_cfg.py, g1_rl/walk_env_cfg.py, g1_rl/body_env_cfg.py,
+#          scripts/evaluate_switch.py (selector), and Unitree's own
+#          external_refs/unitree_rl_gym/deploy/deploy_real/configs/g1.yaml (motor indices, topics).
+#
+# STATUS: these values describe how the policies were TRAINED IN SIMULATION.
+#         Nothing in this file has been run on hardware. Every "unitree_deploy_*" entry that
+#         differs from the "sim_*" entry is an open issue (see docs/open_issues.md).
+
+control:
+  hz: 50
+  dt: 0.02
+  gait_period_s: 0.8        # clock input of both policies: phase = (t mod 0.8) / 0.8, t = seconds since start
+
+robot:
+  msg_type: hg              # Unitree "hg" messages (G1)
+  lowcmd_topic: rt/lowcmd
+  lowstate_topic: rt/lowstate
+  imu: pelvis               # gyro + orientation used for obs[0:6]
+
+# Policy joint order. `motor` = index in LowCmd/LowState motor arrays (deploy_real g1.yaml).
+# default_angle = the pose all joint offsets are relative to. sim_kp/sim_kd = gains used in training.
+# unitree_deploy_* = gains in Unitree's own deploy_real config (waist/arms only; legs are identical).
+joints:
+  # --- legs (controlled by both policies) ---
+  - {i: 0,  name: left_hip_pitch_joint,    motor: 0,  default: -0.1, sim_kp: 100, sim_kd: 2, scale: 0.25, torque_limit: 88}
+  - {i: 1,  name: left_hip_roll_joint,     motor: 1,  default: 0.0,  sim_kp: 100, sim_kd: 2, scale: 0.25, torque_limit: 139}
+  - {i: 2,  name: left_hip_yaw_joint,      motor: 2,  default: 0.0,  sim_kp: 100, sim_kd: 2, scale: 0.25, torque_limit: 88}
+  - {i: 3,  name: left_knee_joint,         motor: 3,  default: 0.3,  sim_kp: 150, sim_kd: 4, scale: 0.25, torque_limit: 139}
+  - {i: 4,  name: left_ankle_pitch_joint,  motor: 4,  default: -0.2, sim_kp: 40,  sim_kd: 2, scale: 0.25, torque_limit: 50}
+  - {i: 5,  name: left_ankle_roll_joint,   motor: 5,  default: 0.0,  sim_kp: 40,  sim_kd: 2, scale: 0.25, torque_limit: 50}
+  - {i: 6,  name: right_hip_pitch_joint,   motor: 6,  default: -0.1, sim_kp: 100, sim_kd: 2, scale: 0.25, torque_limit: 88}
+  - {i: 7,  name: right_hip_roll_joint,    motor: 7,  default: 0.0,  sim_kp: 100, sim_kd: 2, scale: 0.25, torque_limit: 139}
+  - {i: 8,  name: right_hip_yaw_joint,     motor: 8,  default: 0.0,  sim_kp: 100, sim_kd: 2, scale: 0.25, torque_limit: 88}
+  - {i: 9,  name: right_knee_joint,        motor: 9,  default: 0.3,  sim_kp: 150, sim_kd: 4, scale: 0.25, torque_limit: 139}
+  - {i: 10, name: right_ankle_pitch_joint, motor: 10, default: -0.2, sim_kp: 40,  sim_kd: 2, scale: 0.25, torque_limit: 50}
+  - {i: 11, name: right_ankle_roll_joint,  motor: 11, default: 0.0,  sim_kp: 40,  sim_kd: 2, scale: 0.25, torque_limit: 50}
+  # --- waist (controlled by the walking policy v4 only; held at default while the standing policy v1 is active) ---
+  - {i: 12, name: waist_yaw_joint,         motor: 12, default: 0.0,  sim_kp: 200, sim_kd: 5, scale: 0.2,  torque_limit: 88, unitree_deploy_kp: 300, unitree_deploy_kd: 3}
+  - {i: 13, name: waist_roll_joint,        motor: 13, default: 0.0,  sim_kp: 200, sim_kd: 5, scale: 0.2,  torque_limit: 35, unitree_deploy_kp: 300, unitree_deploy_kd: 3}
+  - {i: 14, name: waist_pitch_joint,       motor: 14, default: 0.0,  sim_kp: 200, sim_kd: 5, scale: 0.2,  torque_limit: 35, unitree_deploy_kp: 300, unitree_deploy_kd: 3}
+  # --- arms (NOT controlled by any policy; held/commanded externally; the walking policy only OBSERVES them) ---
+  - {i: 15, name: left_shoulder_pitch_joint,  motor: 15, default: 0.35,  sim_kp: 100, sim_kd: 2, unitree_deploy_kp: 100, unitree_deploy_kd: 2}
+  - {i: 16, name: left_shoulder_roll_joint,   motor: 16, default: 0.18,  sim_kp: 100, sim_kd: 2, unitree_deploy_kp: 100, unitree_deploy_kd: 2}
+  - {i: 17, name: left_shoulder_yaw_joint,    motor: 17, default: 0.0,   sim_kp: 50,  sim_kd: 2, unitree_deploy_kp: 50,  unitree_deploy_kd: 2}
+  - {i: 18, name: left_elbow_joint,           motor: 18, default: 0.87,  sim_kp: 50,  sim_kd: 2, unitree_deploy_kp: 50,  unitree_deploy_kd: 2}
+  - {i: 19, name: left_wrist_roll_joint,      motor: 19, default: 0.0,   sim_kp: 40,  sim_kd: 2, unitree_deploy_kp: 20,  unitree_deploy_kd: 1}
+  - {i: 20, name: left_wrist_pitch_joint,     motor: 20, default: 0.0,   sim_kp: 40,  sim_kd: 2, unitree_deploy_kp: 20,  unitree_deploy_kd: 1}
+  - {i: 21, name: left_wrist_yaw_joint,       motor: 21, default: 0.0,   sim_kp: 40,  sim_kd: 2, unitree_deploy_kp: 20,  unitree_deploy_kd: 1}
+  - {i: 22, name: right_shoulder_pitch_joint, motor: 22, default: 0.35,  sim_kp: 100, sim_kd: 2, unitree_deploy_kp: 100, unitree_deploy_kd: 2}
+  - {i: 23, name: right_shoulder_roll_joint,  motor: 23, default: -0.18, sim_kp: 100, sim_kd: 2, unitree_deploy_kp: 100, unitree_deploy_kd: 2}
+  - {i: 24, name: right_shoulder_yaw_joint,   motor: 24, default: 0.0,   sim_kp: 50,  sim_kd: 2, unitree_deploy_kp: 50,  unitree_deploy_kd: 2}
+  - {i: 25, name: right_elbow_joint,          motor: 25, default: 0.87,  sim_kp: 50,  sim_kd: 2, unitree_deploy_kp: 50,  unitree_deploy_kd: 2}
+  - {i: 26, name: right_wrist_roll_joint,     motor: 26, default: 0.0,   sim_kp: 40,  sim_kd: 2, unitree_deploy_kp: 20,  unitree_deploy_kd: 1}
+  - {i: 27, name: right_wrist_pitch_joint,    motor: 27, default: 0.0,   sim_kp: 40,  sim_kd: 2, unitree_deploy_kp: 20,  unitree_deploy_kd: 1}
+  - {i: 28, name: right_wrist_yaw_joint,      motor: 28, default: 0.0,   sim_kp: 40,  sim_kd: 2, unitree_deploy_kp: 20,  unitree_deploy_kd: 1}
+
+# target position = default + scale * action      (PD: kp, kd; velocity target 0, feed-forward torque 0)
+action:
+  target: "default + scale * action"
+
+# Observation = concatenation in this exact order. s_* are the scales applied AFTER noise.
+observation_terms:
+  - {name: base_ang_vel,      size: 3,  source: "IMU gyro, body frame",                scale: 0.25}
+  - {name: projected_gravity, size: 3,  source: "gravity direction in the body frame (IMU orientation)", scale: 1.0}
+  - {name: velocity_command,  size: 3,  source: "planner [vx, vy, wz], body frame",    scale: [2.0, 2.0, 0.25]}
+  - {name: joint_pos,         size: "N", source: "motor q - default",                  scale: 1.0}
+  - {name: joint_vel,         size: "N", source: "motor dq",                            scale: 0.05}
+  - {name: last_action,       size: "A", source: "previous raw policy output (as applied)", scale: 1.0}
+  - {name: gait_phase,        size: 2,  source: "[sin, cos] of 2*pi*(t mod 0.8)/0.8",  scale: 1.0}
+
+policies:
+  walk:                     # g1_rl task G1-Walk-Flat-Inspire-Arms-*  ("v4")
+    version: v4
+    obs_size: 84            # 3 + 3 + 3 + 29 (joint_pos) + 29 (joint_vel) + 15 (last_action) + 2
+    action_size: 15         # legs 0..11, waist 12..14
+    observed_joints: "all 29, joints[] order (legs, waist, arms)"
+    network: "MLP 84-256-128-128-15, ELU, no observation normalisation; deterministic output = the actor mean"
+    behaviour: "tracks velocity commands well (flat floor, sim); steps in place at zero command (~4 foot lifts/s)"
+  stand:                    # g1_rl task G1-Walk-Flat-Inspire-Play-v0  ("v1")
+    version: v1
+    obs_size: 47            # 3 + 3 + 3 + 12 + 12 + 12 + 2   (legs only; arms and waist are NOT observed)
+    action_size: 12         # legs 0..11. The waist target stays at default while this policy is active.
+    network: "MLP 47-256-128-128-12, ELU, no observation normalisation"
+    behaviour: "stands without stepping (sim); fragile: 38% of envs fall in three shoves up to 0.7 m/s, 62% survive arms held far forward"
+
+selector:                   # scripts/evaluate_switch.py. PENDING the results of that test: do not trust these yet.
+  enter_walk_above: 0.08    # |cmd| = norm(vx, vy) + |wz|
+  exit_walk_below: 0.04
+  debounce_walk_s: 0.2
+  debounce_stand_s: 0.3
+  blend_s: 0.3              # linear cross-fade of the two policies' actions at a switch
+  command_ramp: {linear_m_s2: 1.0, yaw_rad_s2: 2.0}   # decelerations so a stop reaches the handover at low speed
+  both_policies_run_every_step: true
+
+command_limits:
+  trained_range: {vx: [-0.4, 1.0], vy: [-0.5, 0.5], wz: [-1.0, 1.0]}
+  planner_envelope_proposed: {vx: [-0.3, 0.8], vy: [-0.3, 0.3], wz: [-0.8, 0.8]}   # PROPOSAL, unvalidated on hardware
+  unitree_deploy_real_max_cmd: {vx: 0.8, vy: 0.5, wz: 1.57}                        # for reference
+  deadband: 0.05
