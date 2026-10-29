@@ -68,6 +68,16 @@ def main():
     device = "cuda:0"
     env_cfg = parse_env_cfg(args.task, device=device, num_envs=args.num_envs)
     agent_cfg = load_cfg_from_registry(args.task, "rsl_rl_cfg_entry_point")
+    # Isaac Lab 0.54 / rsl-rl >= 4 expects a different runner-config layout than 0.48 / rsl-rl 3.x;
+    # Isaac Lab ships a converter for it (absent on the older install, where the config is used as-is).
+    try:
+        import importlib.metadata as _metadata
+
+        from isaaclab_rl.rsl_rl import handle_deprecated_rsl_rl_cfg
+
+        agent_cfg = handle_deprecated_rsl_rl_cfg(agent_cfg, _metadata.version("rsl-rl-lib"))
+    except ImportError:
+        pass
 
     # Fixed, repeatable commands: no heading controller, no standing envs, no resampling.
     cmd_cfg = env_cfg.commands.base_velocity
@@ -86,7 +96,6 @@ def main():
     runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
     runner.load(ckpt)
     policy = runner.get_inference_policy(device=env.unwrapped.device)
-    policy_nn = runner.alg.policy
 
     base = env.unwrapped
     robot = base.scene["robot"]
@@ -114,7 +123,6 @@ def main():
         for _ in range(steps):
             action = policy(obs)
             obs, _, dones, extras = env.step(action)
-            policy_nn.reset(dones)
             # `alive` stays True only until an env's first termination; its stats stop there.
             died = dones.bool() & ~extras.get("time_outs", torch.zeros_like(dones)).bool()
             w = alive.float()

@@ -82,6 +82,16 @@ def main():
     env_cfg = parse_env_cfg(args.task, device=device, num_envs=1)
     env_cfg.seed = args.seed
     agent_cfg = load_cfg_from_registry(args.task, "rsl_rl_cfg_entry_point")
+    # Isaac Lab 0.54 / rsl-rl >= 4 expects a different runner-config layout than 0.48 / rsl-rl 3.x;
+    # Isaac Lab ships a converter for it (absent on the older install, where the config is used as-is).
+    try:
+        import importlib.metadata as _metadata
+
+        from isaaclab_rl.rsl_rl import handle_deprecated_rsl_rl_cfg
+
+        agent_cfg = handle_deprecated_rsl_rl_cfg(agent_cfg, _metadata.version("rsl-rl-lib"))
+    except ImportError:
+        pass
 
     cmd_cfg = env_cfg.commands.base_velocity
     cmd_cfg.heading_command = False
