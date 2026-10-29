@@ -9,3 +9,6 @@ __pycache__/
 
 # local credentials (lab machine)
 .env
+
+# rendered videos
+videos/

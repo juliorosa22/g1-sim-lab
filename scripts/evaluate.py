@@ -12,9 +12,8 @@ is held constant, and the policy runs for --seconds of sim time. Reported per co
   torque       mean |applied torque| over the 12 leg joints (N*m)
 
 Run with the isaaclab conda env:
-    python scripts/evaluate.py                       # newest checkpoint, headless
     python scripts/evaluate.py --checkpoint logs/rsl_rl/g1_walk_flat_inspire/<run>/model_1499.pt
-    python scripts/evaluate.py --push                # add random push disturbances
+    python scripts/evaluate.py --checkpoint <...> --push     # add random push disturbances
 """
 import argparse
 import json
@@ -28,7 +27,7 @@ from isaaclab.app import AppLauncher
 
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--task", default="G1-Walk-Flat-Inspire-Play-v0")
-parser.add_argument("--checkpoint", default=None, help="model_*.pt; default: newest under logs/rsl_rl/<experiment>")
+parser.add_argument("--checkpoint", required=True, help="path to a model_*.pt (required: the newest run is often a smoke test)")
 parser.add_argument("--num_envs", type=int, default=128)
 parser.add_argument("--seconds", type=float, default=20.0, help="sim time per command")
 parser.add_argument("--push", action="store_true", help="enable random push disturbances")
@@ -44,7 +43,7 @@ import torch
 from rsl_rl.runners import OnPolicyRunner
 
 from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
-from isaaclab_tasks.utils import get_checkpoint_path, parse_env_cfg
+from isaaclab_tasks.utils import parse_env_cfg
 from isaaclab_tasks.utils.parse_cfg import load_cfg_from_registry
 
 import g1_rl  # noqa: F401  (registers the gym ids)
@@ -80,11 +79,7 @@ def main():
     if args.push:
         env_cfg.events.push_robot = EventCfg().push_robot
 
-    if args.checkpoint:
-        ckpt = os.path.abspath(args.checkpoint)
-    else:
-        root = os.path.abspath(os.path.join("logs", "rsl_rl", agent_cfg.experiment_name))
-        ckpt = get_checkpoint_path(root, ".*", "model_.*.pt")
+    ckpt = os.path.abspath(args.checkpoint)
     print(f"[eval] checkpoint: {ckpt}")
 
     env = RslRlVecEnvWrapper(gym.make(args.task, cfg=env_cfg), clip_actions=agent_cfg.clip_actions)

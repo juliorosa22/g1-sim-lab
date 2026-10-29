@@ -39,6 +39,14 @@ LEG_JOINT_NAMES = (
 # Ankle torque limit is 50 N*m: mjlab (2 x 25 N*m motors through the 4-bar
 # linkage) and mujoco_playground (+-50) agree; the sim config's 35 was too low.
 
+WAIST_JOINT_NAMES = ("waist_yaw_joint", "waist_roll_joint", "waist_pitch_joint")
+ARM_JOINT_NAMES = (
+    "left_shoulder_pitch_joint", "left_shoulder_roll_joint", "left_shoulder_yaw_joint",
+    "left_elbow_joint", "left_wrist_roll_joint", "left_wrist_pitch_joint", "left_wrist_yaw_joint",
+    "right_shoulder_pitch_joint", "right_shoulder_roll_joint", "right_shoulder_yaw_joint",
+    "right_elbow_joint", "right_wrist_roll_joint", "right_wrist_pitch_joint", "right_wrist_yaw_joint",
+)
+
 # Max command delay in physics steps (dt=0.005 s -> 4 steps = 20 ms, i.e. one
 # control step). Placeholder range, to be widened once training is stable.
 MAX_ACTUATOR_DELAY_STEPS = 4
@@ -178,4 +186,25 @@ G1_INSPIRE_CFG = ArticulationCfg(
             armature=0.0,
         ),
     },
+)
+
+
+# Variant for tasks where the policy also drives the waist (v3, v4): same gains as
+# the held waist above, but explicit PD with randomized command delay like the legs.
+G1_INSPIRE_WAIST_CFG = G1_INSPIRE_CFG.replace(
+    actuators={
+        **G1_INSPIRE_CFG.actuators,
+        "waist": DelayedPDActuatorCfg(
+            joint_names_expr=[".*waist.*"],
+            effort_limit={".*waist_yaw_joint": 88.0, ".*waist_roll_joint": 35.0, ".*waist_pitch_joint": 35.0},
+            effort_limit_sim={".*waist_yaw_joint": 88.0, ".*waist_roll_joint": 35.0, ".*waist_pitch_joint": 35.0},
+            velocity_limit={".*waist_yaw_joint": 32.0, ".*waist_roll_joint": 30.0, ".*waist_pitch_joint": 30.0},
+            velocity_limit_sim={".*waist_yaw_joint": 32.0, ".*waist_roll_joint": 30.0, ".*waist_pitch_joint": 30.0},
+            stiffness=200.0,
+            damping=5.0,
+            armature=0.01,
+            min_delay=0,
+            max_delay=MAX_ACTUATOR_DELAY_STEPS,
+        ),
+    }
 )

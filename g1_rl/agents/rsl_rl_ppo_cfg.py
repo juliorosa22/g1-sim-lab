@@ -35,3 +35,19 @@ class G1WalkFlatPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         desired_kl=0.01,
         max_grad_norm=1.0,
     )
+
+
+@configclass
+class G1WalkWaistPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_walk_flat_inspire_waist"
+        self.max_iterations = 3000
+
+
+@configclass
+class G1WalkArmsPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_walk_flat_inspire_arms"
+        self.max_iterations = 3000

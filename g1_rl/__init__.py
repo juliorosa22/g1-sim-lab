@@ -27,3 +27,18 @@ gym.register(
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:G1WalkFlatPPORunnerCfg",
     },
 )
+
+for _name, _env, _agent in (
+    ("Waist", "G1WalkWaistEnvCfg", "G1WalkWaistPPORunnerCfg"),  # v3: legs + waist
+    ("Arms", "G1WalkArmsEnvCfg", "G1WalkArmsPPORunnerCfg"),  # v4: + arm-randomised, all 29 joints observed
+):
+    for _suffix, _cfg_suffix in (("", ""), ("-Play", "_PLAY")):
+        gym.register(
+            id=f"G1-Walk-Flat-Inspire-{_name}{_suffix}-v0",
+            entry_point="isaaclab.envs:ManagerBasedRLEnv",
+            disable_env_checker=True,
+            kwargs={
+                "env_cfg_entry_point": f"{__name__}.body_env_cfg:{_env}{_cfg_suffix}",
+                "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:{_agent}",
+            },
+        )
