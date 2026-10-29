@@ -30,6 +30,19 @@ def _standing(env: ManagerBasedRLEnv, command_name: str, deadband: float) -> tor
     return ((cmd[:, :2].norm(dim=1) < deadband) & (cmd[:, 2].abs() < deadband)).float()
 
 
+def _stand_mask(env: ManagerBasedRLEnv, command_name: str, deadband: float, recovery_speed: float = 0.0) -> torch.Tensor:
+    """_standing, minus moments of recovery: when the base is moving faster than
+    `recovery_speed` or tilted past ~9 degrees (a shove just landed), stepping is the right
+    response, so the penalties on the act of stepping are switched off. 0 = no exemption."""
+    mask = _standing(env, command_name, deadband)
+    if recovery_speed > 0.0:
+        asset = env.scene["robot"]
+        fast = asset.data.root_lin_vel_w[:, :2].norm(dim=1) > recovery_speed
+        tilted = asset.data.projected_gravity_b[:, :2].norm(dim=1) > 0.15
+        mask = mask * (~(fast | tilted)).float()
+    return mask
+
+
 def _base_motion(asset) -> tuple[torch.Tensor, torch.Tensor]:
     return asset.data.root_lin_vel_w[:, :2].norm(dim=1), asset.data.root_ang_vel_w[:, 2].abs()
 
@@ -49,9 +62,11 @@ def stand_still_exp(
     return _standing(env, command_name, deadband) * torch.exp(-(v**2 + wz**2) / std**2)
 
 
-def stand_joint_vel_l2(env: ManagerBasedRLEnv, command_name: str, deadband: float, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+def stand_joint_vel_l2(
+    env: ManagerBasedRLEnv, command_name: str, deadband: float, asset_cfg: SceneEntityCfg, recovery_speed: float = 0.0
+) -> torch.Tensor:
     asset = env.scene[asset_cfg.name]
-    return _standing(env, command_name, deadband) * torch.sum(torch.square(asset.data.joint_vel[:, asset_cfg.joint_ids]), dim=1)
+    return _stand_mask(env, command_name, deadband, recovery_speed) * torch.sum(torch.square(asset.data.joint_vel[:, asset_cfg.joint_ids]), dim=1)
 
 
 def stand_pose_l1(env: ManagerBasedRLEnv, command_name: str, deadband: float, asset_cfg: SceneEntityCfg) -> torch.Tensor:
@@ -61,15 +76,19 @@ def stand_pose_l1(env: ManagerBasedRLEnv, command_name: str, deadband: float, as
     return _standing(env, command_name, deadband) * torch.sum(dev.abs(), dim=1)
 
 
-def stand_action_rate_l2(env: ManagerBasedRLEnv, command_name: str, deadband: float) -> torch.Tensor:
+def stand_action_rate_l2(
+    env: ManagerBasedRLEnv, command_name: str, deadband: float, recovery_speed: float = 0.0
+) -> torch.Tensor:
     """Extra action-rate penalty while standing (the global one is small)."""
     delta = env.action_manager.action - env.action_manager.prev_action
-    return _standing(env, command_name, deadband) * torch.sum(torch.square(delta), dim=1)
+    return _stand_mask(env, command_name, deadband, recovery_speed) * torch.sum(torch.square(delta), dim=1)
 
 
-def stand_feet_air(env: ManagerBasedRLEnv, command_name: str, deadband: float, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+def stand_feet_air(
+    env: ManagerBasedRLEnv, command_name: str, deadband: float, sensor_cfg: SceneEntityCfg, recovery_speed: float = 0.0
+) -> torch.Tensor:
     """Number of feet off the ground while standing (a lifted foot = a step)."""
     sensor = env.scene.sensors[sensor_cfg.name]
     forces = sensor.data.net_forces_w_history[:, :, sensor_cfg.body_ids, :].norm(dim=-1).max(dim=1)[0]
     airborne = (forces < 1.0).float().sum(dim=1)
-    return _standing(env, command_name, deadband) * airborne
+    return _stand_mask(env, command_name, deadband, recovery_speed) * airborne

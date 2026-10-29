@@ -31,7 +31,8 @@ gym.register(
 for _name, _env, _agent in (
     ("Waist", "G1WalkWaistEnvCfg", "G1WalkWaistPPORunnerCfg"),  # v3: legs + waist
     ("Arms", "G1WalkArmsEnvCfg", "G1WalkArmsPPORunnerCfg"),  # v4: + arm-randomised, all 29 joints observed
-    ("Stand", "G1WalkStandEnvCfg", "G1WalkStandPPORunnerCfg"),  # v5: v4 + stand still, no stepping
+    ("Stand", "G1WalkStandEnvCfg", "G1WalkStandPPORunnerCfg"),  # v5: v4 + stand still, no stepping (collapsed)
+    ("StandRamp", "G1WalkStandRampEnvCfg", "G1WalkStandRampPPORunnerCfg"),  # v6: v5 made trainable, warm-started from v4
 ):
     for _suffix, _cfg_suffix in (("", ""), ("-Play", "_PLAY")):
         gym.register(

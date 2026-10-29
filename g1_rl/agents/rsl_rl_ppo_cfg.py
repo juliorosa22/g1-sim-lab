@@ -59,3 +59,21 @@ class G1WalkStandPPORunnerCfg(G1WalkFlatPPORunnerCfg):
         super().__post_init__()
         self.experiment_name = "g1_walk_flat_inspire_stand"
         self.max_iterations = 3000
+
+
+@configclass
+class G1WalkStandRampPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    """Warm start from v4: logs/rsl_rl/g1_walk_flat_inspire_stand6/warm_start_v4/model_2999.pt must exist
+    (a copy of v4's final checkpoint, in the format of the installed rsl-rl).
+
+    NOTE: Isaac Lab's train.py overwrites `resume` with its CLI value (default False), so the
+    fields below are not enough -- launch with `--resume --load_run warm_start_v4 --checkpoint model_2999.pt`.
+    """
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_walk_flat_inspire_stand6"
+        self.max_iterations = 500
+        self.resume = True
+        self.load_run = "warm_start_v4"
+        self.load_checkpoint = "model_2999.pt"

@@ -11,6 +11,7 @@
 Both inherit everything else (commands, randomization, rewards, terminations)
 from the v2 flat task and change only what is listed in each __post_init__.
 """
+from isaaclab.managers import CurriculumTermCfg as CurrTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
@@ -186,6 +187,61 @@ class G1WalkStandEnvCfg(G1WalkArmsEnvCfg):
 
 @configclass
 class G1WalkStandEnvCfg_PLAY(G1WalkStandEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.scene.num_envs = 50
+        self.scene.env_spacing = 2.5
+        self.observations.policy.enable_corruption = False
+        self.events.push_robot = None
+
+
+# ---------------------------------------------------------------------------------------
+# v6: v5 made trainable. v5 collapsed (reward -17, 93% falls): see ramp_stand_rewards.
+# ---------------------------------------------------------------------------------------
+STAND_RAMP_START = 600  # env steps (24 per PPO iteration): iteration ~25
+STAND_RAMP_END = 4200  # iteration ~175
+STAND_BONUS_STD = (0.20, 0.05)  # still-bonus kernel width, m/s: wide at first, narrow once ramped
+RECOVERY_SPEED = 0.25  # m/s: faster than this (or tilted) = recovering from a shove, stepping allowed
+
+
+@configclass
+class G1WalkStandRampEnvCfg(G1WalkStandEnvCfg):
+    """v5 + the five fixes. Meant to be warm-started from v4 (same 84 -> 15 network):
+      1. stand rewards ramp in (0 -> full) instead of starting at full strength
+      2. a fall costs -40 (weight -2000 x dt), not -4, so it can never be the cheaper option
+      3. the still-bonus kernel starts wide (20 cm/s) so it gives a signal, then narrows to 5 cm/s
+      4. penalties on the act of stepping are off while recovering from a shove
+      5. (training config) resumes from v4's weights
+    """
+
+    def __post_init__(self):
+        super().__post_init__()
+        r = self.rewards
+        r.termination_penalty.weight = -2000.0
+
+        stand_terms = ("stand_still_exp", "stand_speed_l1", "stand_feet_air", "stand_joint_vel_l2",
+                       "stand_pose_l1", "stand_action_rate_l2")
+        final = {name: getattr(r, name).weight for name in stand_terms}
+        for name in stand_terms:
+            getattr(r, name).weight = 0.0  # the curriculum raises them
+
+        for name in ("stand_feet_air", "stand_joint_vel_l2", "stand_action_rate_l2"):
+            getattr(r, name).params["recovery_speed"] = RECOVERY_SPEED
+        r.stand_still_exp.params["std"] = STAND_BONUS_STD[0]
+
+        self.curriculum.stand_ramp = CurrTerm(
+            func=mdp.ramp_stand_rewards,
+            params={
+                "term_weights": final,
+                "start_step": STAND_RAMP_START,
+                "end_step": STAND_RAMP_END,
+                "anneal": {"stand_still_exp": ("std", STAND_BONUS_STD[0], STAND_BONUS_STD[1])},
+            },
+        )
+
+
+@configclass
+class G1WalkStandRampEnvCfg_PLAY(G1WalkStandRampEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         self.scene.num_envs = 50
