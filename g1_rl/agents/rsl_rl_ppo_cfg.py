@@ -77,3 +77,23 @@ class G1WalkStandRampPPORunnerCfg(G1WalkFlatPPORunnerCfg):
         self.resume = True
         self.load_run = "warm_start_v4"
         self.load_checkpoint = "model_2999.pt"
+
+
+@configclass
+class G1V7PPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    """v7 = v1's recipe on the real plant: v1's PPO settings (1500 iterations; run it with 2048 envs like v1)."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v7_stand_real"
+        self.max_iterations = 1500
+
+
+@configclass
+class G1V8PPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    """v8 = v4's recipe on the real plant: v4's PPO settings (3000 iterations; run it with 8192 envs like v4)."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v8_walk_real"
+        self.max_iterations = 3000

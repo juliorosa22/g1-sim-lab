@@ -29,3 +29,10 @@ def randomize_encoder_bias(
     actor sees -- a miscalibrated encoder. Stored on the env; startup mode."""
     n = len(asset_cfg.joint_ids)
     env.encoder_bias = torch.empty(env.num_envs, n, device=env.device).uniform_(*bias_range)
+
+
+def randomize_gyro_bias(env: ManagerBasedEnv, env_ids: torch.Tensor | None, bias_range: tuple[float, float]):
+    """Per-env constant offset (rad/s, per axis) that g1_rl.mdp.observations.base_ang_vel_biased adds to the
+    gyro the actor sees. The first hardware session measured a constant pelvis-gyro bias of about
+    [-0.0004, 0.0043, 0.0010] rad/s. Startup mode."""
+    env.gyro_bias = torch.empty(env.num_envs, 3, device=env.device).uniform_(*bias_range)

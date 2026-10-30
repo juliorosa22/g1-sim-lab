@@ -53,3 +53,10 @@ def gait_phase_gated(env: ManagerBasedRLEnv, period_s: float, command_name: str,
         env._gait_time_step = env.common_step_counter
     angle = 2.0 * torch.pi * ((t % period_s) / period_s)
     return torch.stack((torch.sin(angle), torch.cos(angle)), dim=-1)
+
+
+def base_ang_vel_biased(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """Body-frame angular velocity plus the per-env gyro bias from g1_rl.mdp.events.randomize_gyro_bias."""
+    w = env.scene[asset_cfg.name].data.root_ang_vel_b
+    bias = getattr(env, "gyro_bias", None)
+    return w if bias is None else w + bias

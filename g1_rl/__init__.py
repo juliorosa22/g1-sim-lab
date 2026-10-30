@@ -44,3 +44,19 @@ for _name, _env, _agent in (
                 "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:{_agent}",
             },
         )
+
+# v7 / v8: the v1 and v4 recipes on the real plant (hardware session 2026-10-29): Unitree gains, waist roll/pitch locked.
+for _name, _mod, _env, _agent in (
+    ("V7", "v7_env_cfg", "G1V7EnvCfg", "G1V7PPORunnerCfg"),  # standing, legs only (12 actions), v1's recipe
+    ("V8", "v8_env_cfg", "G1V8EnvCfg", "G1V8PPORunnerCfg"),  # walking, legs + waist yaw (13 actions), v4's recipe
+):
+    for _suffix, _cfg_suffix in (("", ""), ("-Play", "_PLAY")):
+        gym.register(
+            id=f"G1-Walk-Flat-Inspire-{_name}{_suffix}-v0",
+            entry_point="isaaclab.envs:ManagerBasedRLEnv",
+            disable_env_checker=True,
+            kwargs={
+                "env_cfg_entry_point": f"{__name__}.{_mod}:{_env}{_cfg_suffix}",
+                "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:{_agent}",
+            },
+        )
