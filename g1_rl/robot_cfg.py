@@ -297,3 +297,18 @@ WAIST_YAW_JOINT = "waist_yaw_joint"
 WAIST_LOCKED_JOINTS = ("waist_roll_joint", "waist_pitch_joint")
 G1_REAL_STAND_CFG = make_real_cfg(drive_waist_yaw=False)  # v7: legs-only policy, waist yaw held
 G1_REAL_WALK_CFG = make_real_cfg(drive_waist_yaw=True)    # v8: legs + waist yaw driven
+
+
+def make_v1_original_cfg() -> ArticulationCfg:
+    """The robot exactly as v1 was trained (commit 3028d1f): the simulation gains and an ankle torque limit of
+    35 N*m (v2 raised it to 50). Used by the v1 replica task to ask whether v1's planted-feet standing is a
+    property of the plant, the software stack or the seed."""
+    legs = _G1_BASE_CFG.actuators["legs"]
+    effort = dict(legs.effort_limit)
+    effort[".*_ankle_pitch_joint"] = 35.0
+    effort[".*_ankle_roll_joint"] = 35.0
+    legs = legs.replace(effort_limit=effort, effort_limit_sim=dict(effort))
+    return _G1_BASE_CFG.replace(actuators={**_G1_BASE_CFG.actuators, "legs": legs})
+
+
+G1_V1_ORIGINAL_CFG = make_v1_original_cfg()

@@ -97,3 +97,35 @@ class G1V8PPORunnerCfg(G1WalkFlatPPORunnerCfg):
         super().__post_init__()
         self.experiment_name = "g1_v8_walk_real"
         self.max_iterations = 3000
+
+
+@configclass
+class G1V1ReplicaPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v1_replica"
+        self.max_iterations = 1500
+
+
+@configclass
+class G1V9aPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v9a_walk_height"
+        self.max_iterations = 3000
+
+
+@configclass
+class G1V9bPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v9b_walk_pose"
+        self.max_iterations = 3000
+
+
+@configclass
+class G1V10PPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v10_stand_pose"
+        self.max_iterations = 1500

@@ -23,7 +23,7 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from isaaclab_tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg
 
 from . import mdp
-from .robot_cfg import G1_REAL_STAND_CFG, LEG_JOINT_NAMES
+from .robot_cfg import G1_REAL_STAND_CFG, G1_V1_ORIGINAL_CFG, LEG_JOINT_NAMES
 
 GAIT_PERIOD_S = 0.8  # Unitree's reference gait clock (g1_walking/config.py)
 
@@ -279,5 +279,25 @@ class G1V7EnvCfg_PLAY(G1V7EnvCfg):
         self.scene.num_envs = 50
         self.scene.env_spacing = 2.5
         # no randomization or pushes when watching / evaluating
+        self.observations.policy.enable_corruption = False
+        self.events.push_robot = None
+
+
+@configclass
+class G1V1ReplicaEnvCfg(G1V7EnvCfg):
+    """v1's recipe on v1's ORIGINAL plant (simulation gains, ankle limit 35). Run on the lab stack with v1's seed:
+    if it also steps in place, v1's standing was a property of the stack or the seed, not of the recipe."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.scene.robot = G1_V1_ORIGINAL_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+
+
+@configclass
+class G1V1ReplicaEnvCfg_PLAY(G1V1ReplicaEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.scene.num_envs = 50
+        self.scene.env_spacing = 2.5
         self.observations.policy.enable_corruption = False
         self.events.push_robot = None

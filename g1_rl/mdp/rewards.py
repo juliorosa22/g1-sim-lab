@@ -2,8 +2,9 @@
 import torch
 
 from isaaclab.envs import ManagerBasedRLEnv
-from isaaclab.managers import SceneEntityCfg
+from isaaclab.managers import ManagerTermBase, RewardTermCfg, SceneEntityCfg
 from isaaclab.utils.math import quat_apply_inverse
+from isaaclab.utils.string import resolve_matching_names_values
 
 
 def body_flat_orientation_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
@@ -92,3 +93,40 @@ def stand_feet_air(
     forces = sensor.data.net_forces_w_history[:, :, sensor_cfg.body_ids, :].norm(dim=-1).max(dim=1)[0]
     airborne = (forces < 1.0).float().sum(dim=1)
     return _stand_mask(env, command_name, deadband, recovery_speed) * airborne
+
+
+class variable_posture(ManagerTermBase):
+    """Whole-body pose reward with a speed-dependent tolerance (after mjlab's `variable_posture`).
+
+    reward = exp(-mean_over_joints(error^2 / std^2)), error = joint position - default pose.
+    The tolerance (std, rad) per joint depends on the commanded speed (norm of the linear command + |yaw rate|):
+    `std_standing` when it is below `walking_threshold` (tight: holds the default pose), `std_walking` otherwise
+    (loose enough for a stride; v8's crouch scores 0.36 while walking and 0.00 while standing, against 1.0 at the default pose).
+
+    Added because policies trained on the real plant (v7, v8) crouch (knee ~1.1 rad against a 0.3 default): nothing
+    in the earlier reward set anchored the posture. Unitree, mjlab and playground all have such a term.
+    """
+
+    def __init__(self, cfg: RewardTermCfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        asset_cfg = cfg.params["asset_cfg"]
+        asset = env.scene[asset_cfg.name]
+        self.joint_ids = asset_cfg.joint_ids
+        names = [asset.joint_names[i] for i in self.joint_ids]
+        _, _, standing = resolve_matching_names_values(cfg.params["std_standing"], names)
+        _, _, walking = resolve_matching_names_values(cfg.params["std_walking"], names)
+        self.std_standing = torch.tensor(standing, device=env.device, dtype=torch.float32)
+        self.std_walking = torch.tensor(walking, device=env.device, dtype=torch.float32)
+
+    def __call__(
+        self, env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, command_name: str, std_standing: dict,
+        std_walking: dict, walking_threshold: float = 0.05,
+    ) -> torch.Tensor:
+        del std_standing, std_walking  # resolved once in __init__
+        asset = env.scene[asset_cfg.name]
+        cmd = env.command_manager.get_command(command_name)
+        speed = cmd[:, :2].norm(dim=1) + cmd[:, 2].abs()
+        standing = (speed < walking_threshold).float().unsqueeze(1)
+        std = self.std_standing * standing + self.std_walking * (1.0 - standing)
+        error = asset.data.joint_pos[:, self.joint_ids] - asset.data.default_joint_pos[:, self.joint_ids]
+        return torch.exp(-torch.mean(torch.square(error) / torch.square(std), dim=1))

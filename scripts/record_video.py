@@ -4,6 +4,7 @@
 Scenarios (a scripted sequence of velocity commands, one robot, flat ground):
   showcase   stand -> walk 0.5 -> 1.0 m/s -> walk-and-turn left/right -> slow -> stop
   push       walk at 0.5 m/s while being shoved sideways and forward, then a shove while standing
+  stand      20 s at zero command, two shoves from 11 s: stands still? steps in place? recovers?
 
     python scripts/record_video.py --checkpoint <run>/model_1499.pt --scenario showcase
     python scripts/record_video.py --checkpoint <run>/model_1499.pt --scenario push
@@ -26,7 +27,7 @@ from isaaclab.app import AppLauncher
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--task", default="G1-Walk-Flat-Inspire-Play-v0")
 parser.add_argument("--checkpoint", required=True)
-parser.add_argument("--scenario", choices=["showcase", "push"], default="showcase")
+parser.add_argument("--scenario", choices=["showcase", "push", "stand"], default="showcase")
 parser.add_argument("--out-dir", default=os.path.join(REPO_ROOT, "videos"))
 parser.add_argument("--title", default="Unitree G1 | RL walking policy | Isaac Lab + PPO")
 parser.add_argument("--width", type=int, default=1280)
@@ -64,11 +65,16 @@ SCENARIOS = {
         (12.0, (0.5, 0.0, 0.0), "Walking forward  0.5 m/s"),
         (3.0, (0.0, 0.0, 0.0), "Standing"),
     ],
+    "stand": [  # zero command the whole time: does it stand still, and what does it do when shoved?
+        (9.0, (0.0, 0.0, 0.0), "Standing (zero command)"),
+        (11.0, (0.0, 0.0, 0.0), "Standing, being pushed"),
+    ],
 }
 # scripted shoves: (time_s, (dvx, dvy) added to the base velocity in m/s)
 PUSHES = {
     "showcase": [],
     "push": [(3.0, (0.0, 0.8)), (6.0, (0.0, -0.8)), (9.0, (0.8, 0.0)), (13.0, (0.0, 0.6))],
+    "stand": [(11.0, (0.0, 0.3)), (16.0, (0.4, 0.0))],
 }
 
 

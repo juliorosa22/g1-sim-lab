@@ -188,6 +188,7 @@ def main():
     sensor_foot_ids = sensor.find_bodies(".*_ankle_roll_link")[0]
     min_air = max(int(MIN_AIR_S / dt), 1)
     cmd_scale = torch.tensor([2.0, 2.0, 0.25], device=device)
+    n_act = base.action_manager.total_action_dim  # 15 for v3/v4 (legs + 3 waist), 13 for v8 (legs + waist yaw)
 
     def stand_obs(cmd_t):
         """v1's 47-value observation, built as its own task built it (see g1_rl/walk_env_cfg.py)."""
@@ -216,7 +217,7 @@ def main():
     n_up, n_down = int(args.debounce_walk / dt), int(args.debounce_stand / dt)
     events, switches_in_seg = [], {}
     pending = []  # transient trackers after a switch
-    prev_action = z(n, 15)
+    prev_action = z(n, n_act)
     air_run = z(n, 2)
     seg_acc = {}  # per-segment accumulators
 
@@ -267,7 +268,7 @@ def main():
         w_walk = min(1.0, w_walk + step_w) if mode == WALK else max(0.0, w_walk - step_w)
 
         a_walk = walk_net(obs["policy"])
-        a_stand = torch.cat((stand_net(stand_obs(cmd_shaped.expand(n, 3))), z(n, 3)), dim=1)
+        a_stand = torch.cat((stand_net(stand_obs(cmd_shaped.expand(n, 3))), z(n, n_act - 12)), dim=1)  # waist slots stay at default
         action = w_walk * a_walk + (1.0 - w_walk) * a_stand
         obs, _, terminated, truncated, _ = env.step(action)
 
