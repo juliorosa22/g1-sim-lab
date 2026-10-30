@@ -7,6 +7,9 @@ Procedure for the robot states follows Unitree's `deploy_real/README.md`.
 - [ ] Ethernet cable connected; laptop wired interface has a `192.168.123.x/24` address.
 - [ ] `scripts/robot_check.sh` passes (ping, ssh, versions, deploy dir).
 
+- [ ] `systemctl is-active unitree-start-joystick.service` (read-only). Must be stopped before any policy test (Stage 3
+      onward); the RC's START button would otherwise launch `iniciar_robo.sh` / `movimentos_militares.py`. See CLAUDE.md rule 7.
+
 ## Stage 1: files only (no risk)
 - [ ] `scripts/robot_sync.sh` (dry run), review the list, then `scripts/robot_sync.sh --apply`.
 - [ ] On the robot, confirm the files and that Python 3.8 + torch import the exported policies.
@@ -26,6 +29,8 @@ Procedure for the robot states follows Unitree's `deploy_real/README.md`.
 - [ ] Debug mode as in Unitree's procedure (zero torque, then L2+R2). Start the controller; joints are limp.
 - [ ] `start` -> default pose. Verify motion is smooth and torques are sane. Watchdog tested (kill the controller: robot must go limp/safe).
 - [ ] Standing policy only, then walking policy only, at tiny commands, still hoisted.
+
+- [ ] Plant identification (hoisted, one joint at a time, low gains): follow `docs/hoisted_joint_tests.md`; each run needs its own yes.
 
 ## Stage 5: feet touching down, hoist still taking weight
 - [ ] Lower slowly, standing policy only. Watch for oscillation. Be ready to e-stop.

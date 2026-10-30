@@ -1,0 +1,31 @@
+{
+ "status": "preliminary, 1 run, robot suspended on support, zero torque, ~22 s",
+ "gyro_bias_rad_s_xyz": [
+  -0.00037,
+  0.00433,
+  0.00096
+ ],
+ "gyro_std_rad_s_xyz": [
+  0.00095,
+  0.00226,
+  0.0015
+ ],
+ "accel_mean_m_s2_xyz": [
+  1.115,
+  -0.264,
+  9.74
+ ],
+ "accel_norm_mean": 9.808,
+ "quaternion_order": "w,x,y,z (inferred: element 0 ~ 0.998 at a small tilt)",
+ "projected_gravity_body_mean": [
+  -0.1188,
+  0.0109,
+  -0.9929
+ ],
+ "projected_gravity_std": [
+  0.00035,
+  0.00018,
+  4e-05
+ ],
+ "note": "gravity z ~ -1 upright, same convention as the sim; robot is tilted ~6.8 deg (pitch) on the support, so not a level reference. Only the pelvis imu_state exists in hg LowState (no torso IMU field)."
+}

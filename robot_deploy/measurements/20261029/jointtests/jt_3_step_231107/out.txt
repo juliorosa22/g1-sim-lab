@@ -1,0 +1,4 @@
+PLAN joint 3 (l_knee) profile=step amp=0.050 rad kp=40.0 kd=2.00 | tau cap 8.0 N*m, max excursion 0.100 rad (abort at x1.5), speed cap 2.0 rad/s | others held at 0.50 x nominal gains | publish rate 50 Hz | duration 11.0 s + 2.5 s damping
+   start q = 0.258 rad; target range [0.208, 0.308]; worst commanded kp*err = 4.00 N*m
+PREFLIGHT problems: none | warnings: ['27 motors report mode [0] with no publisher: expected in debug mode (disabled until the first command with mode=1 enables them). Limbs may be free to swing', 'hottest motor 51 C']
+END reason: finished (t_stop 11.00 s); rows 676; publishing has STOPPED

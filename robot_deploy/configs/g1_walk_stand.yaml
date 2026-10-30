@@ -7,6 +7,16 @@
 # STATUS: these values describe how the policies were TRAINED IN SIMULATION.
 #         Nothing in this file has been run on hardware. Every "unitree_deploy_*" entry that
 #         differs from the "sim_*" entry is an open issue (see docs/open_issues.md).
+#
+# HARDWARE FINDINGS 2026-10-29 (one unit; see measurements/20261029/REPORT.md and docs/sim_parameter_proposal.md). Values below are UNCHANGED:
+#   - waist_roll_joint / waist_pitch_joint (motors 13, 14): ABSENT/LOCKED on this unit (mode 0, all zeros). Outputs for them cannot act.
+#   - the onboard controller's own gains differ from sim_kp/sim_kd: legs kp 100/100/100/150/60/60, kd 4/4/4/5/3/3 (ankle kp 60 vs 40 here,
+#     leg kd about double); waist 200 / 6; shoulders+elbow 60 / 3; wrists 40 / 3.
+#   - commands from the Jetson act as a pure PD; at 50 Hz the command-to-motion latency is 3-8 ms. Do NOT publish faster than 50 Hz
+#     (at 200 Hz the response lagged ~120 ms, probably a backlog).
+#   - unloaded static friction (estimated): wrist ~0.2, elbow ~0.4-0.6, knee ~0.6, ankle pitch ~1.0 N*m; torque_limit values here are sim values,
+#     the real limits were not read.
+#   - rt/lowstate arrives at ~700-1000 Hz; unitree-start-joystick.service must be stopped before any policy test (CLAUDE.md rule 7).
 
 control:
   hz: 50

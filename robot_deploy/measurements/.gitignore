@@ -1,0 +1,6 @@
+# Large raw recordings stay on the laptop (and robot); summaries, reports and csv tables stay tracked.
+*.bin
+*_raw.csv
+*_raw.txt
+motion_state.csv
+motion_cmd.csv

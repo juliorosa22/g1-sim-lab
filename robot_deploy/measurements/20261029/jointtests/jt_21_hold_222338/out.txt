@@ -1,0 +1,4 @@
+PLAN joint 21 (l_wrist_yaw) profile=hold amp=0.050 rad kp=20.0 kd=1.00 | tau cap 3.0 N*m, max excursion 0.100 rad (abort at x1.5), speed cap 2.0 rad/s | others held at 0.50 x nominal gains | duration 32.0 s + 2.5 s damping
+   start q = -0.000 rad; target range [-0.050, 0.050]; worst commanded kp*err = 2.00 N*m
+PREFLIGHT problems: none | warnings: ['27 motors report mode [0] with no publisher: expected in debug mode (disabled until the first command with mode=1 enables them). Limbs may be free to swing', 'hottest motor 54 C']
+END reason: held joint 15 drifted -0.150 rad (t_stop 16.08 s); rows 3716; publishing has STOPPED

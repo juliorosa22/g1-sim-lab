@@ -6,6 +6,7 @@ _ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 set -a; source <(grep '^ROBOT_' "$_ROOT/.env"); set +a
 : "${ROBOT_HOST:?ROBOT_HOST not set in .env}" "${ROBOT_USER:?ROBOT_USER not set in .env}" "${ROBOT_PASSWORD:?ROBOT_PASSWORD not set in .env}"
 export SSHPASS="$ROBOT_PASSWORD"   # sshpass -e reads it, so the password never appears in a command line
+ROBOT_HOST="${ROBOT_HOST_OVERRIDE:-$ROBOT_HOST}"   # e.g. ROBOT_HOST_OVERRIDE=10.173.210.67 to reach the robot over Wi-Fi
 ROBOT_DEPLOY_DIR="${ROBOT_DEPLOY_DIR:-/home/$ROBOT_USER/g1_deploy}"
 ROBOT_SSH_OPTS=(-o ConnectTimeout=8 -o ServerAliveInterval=5 -o ServerAliveCountMax=2
                 -o StrictHostKeyChecking=accept-new -o PubkeyAuthentication=no

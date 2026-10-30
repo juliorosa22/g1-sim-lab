@@ -1,0 +1,192 @@
+Thu 29 Oct 2026 08:58:35 PM CST
+==> start_joystick.log <==
+
+==> inicializacao.log <==
+
+==> movimentos_militares.log <==
+
+==> start_joystick.log <==
+START pressionado.
+Iniciando serviços do robô...
+
+==> inicializacao.log <==
+
+==========================================
+Inicialização: Thu 29 Oct 2026 08:59:17 PM CST
+==========================================
+[0/5] Aguardando PulseAudio...
+PulseAudio disponível.
+[1/5] Conectando caixa Bluetooth...
+Selecionando controlador Bluetooth: 8C:8B:2B:60:02:DC
+Configurando caixa como confiável...
+Tentando conectar à caixa Bluetooth...
+Tentativa Bluetooth 1/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 2/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 3/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 4/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 5/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 6/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 7/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+
+==> start_joystick.log <==
+Inicializando DDS pela interface eth0...
+Aguardando LowState do robô...
+LowState recebido. Joystick pronto.
+Aguardando botão START...
+START pressionado.
+Iniciando serviços do robô...
+
+==> inicializacao.log <==
+
+==========================================
+Inicialização: Thu 29 Oct 2026 09:00:37 PM CST
+==========================================
+[0/5] Aguardando PulseAudio...
+PulseAudio disponível.
+[1/5] Conectando caixa Bluetooth...
+Selecionando controlador Bluetooth: 8C:8B:2B:60:02:DC
+Configurando caixa como confiável...
+Tentando conectar à caixa Bluetooth...
+Tentativa Bluetooth 1/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 2/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 3/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 4/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 5/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 6/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 7/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 8/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 9/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 10/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 11/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 12/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 13/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 14/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+Tentativa Bluetooth 15/15...
+Attempting to connect to A8:AA:CD:C6:5C:A3
+Failed to connect: org.bluez.Error.Failed
+AVISO: caixa Bluetooth nao conectou; seguindo SEM audio Bluetooth.
+Aguardando sink Bluetooth aparecer...
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+AVISO: caixa conectada, mas o sink Bluetooth ainda não apareceu.
+[2/5] Iniciando TTS e STT...
+Iniciando o contêiner existente...
+openvoice-piper
+
+Serviços configurados:
+  TTS Piper:  http://127.0.0.1:5005
+  STT Whisper: http://127.0.0.1:5006
+
+Acompanhar logs:
+  /usr/bin/docker logs -f openvoice-piper
+Aguardando servidor Piper...
+Piper pronto.
+Aguardando servidor Whisper...
+Whisper pronto.
+[3/5] Iniciando assistente...
+[4/5] Iniciando movimentos militares...
+
+==> movimentos_militares.log <==
+
+SELECT + RIGHT -> Apresentação
+F1 + UP        -> Inicializar
+F1 + DOWN   -> DAMP
+F1 + Y      -> Sentido
+F1 + X      -> Descansar
+F1 + B      -> Continência
+F1 + A      -> Descansar arma
+F1 + RIGHT  -> Modo de equilíbrio
+
+Ctrl+C para encerrar.
+
+Aguardando estabilização do controlador...
+Controlador pronto.
+
+==> inicializacao.log <==
+[5/5] Todos os serviços iniciados.
+Inicialização concluída.
+== after:
+Thu 29 Oct 2026 09:03:15 PM CST
+1349747 bash -c cd /home/unitree/hhhh; date; timeout 400 tail -n0 -F start_joystick.log inicializacao.log movimentos_militares.log 2>&1 | se
+1354408 python3 /home/unitree/hhhh/assistente.py
+1354410 /usr/bin/python3 /home/unitree/hhhh/movimentos_militares.py --iface eth0
+1354669 python3 /home/unitree/hhhh/falar.py Ocorreu um erro. Verifique os serviços e tente novamente.

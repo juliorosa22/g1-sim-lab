@@ -1,0 +1,4 @@
+PLAN joint 10 (r_ankle_pitch) profile=ramp amp=0.080 rad kp=30.0 kd=1.50 | tau cap 5.0 N*m, max excursion 0.100 rad (abort at x1.5), speed cap 2.0 rad/s | others held at 0.50 x nominal gains | publish rate 50 Hz | duration 18.0 s + 2.5 s damping
+   start q = -0.100 rad; target range [-0.180, -0.020]; worst commanded kp*err = 3.00 N*m
+PREFLIGHT problems: none | warnings: ['27 motors report mode [0] with no publisher: expected in debug mode (disabled until the first command with mode=1 enables them). Limbs may be free to swing', 'hottest motor 51 C']
+END reason: finished (t_stop 18.00 s); rows 1025; publishing has STOPPED

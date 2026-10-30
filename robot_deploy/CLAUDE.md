@@ -23,6 +23,11 @@ people and break hardware.
 5. Don't copy secrets into this folder. Credentials live only in the project's `.env`
    (git-ignored). `scripts/robot_env.sh` loads just the `ROBOT_*` entries.
 6. If a command's effect on the robot is unclear, ask first.
+7. **Before ANY policy test, every session: stop `unitree-start-joystick.service`** (a custom service, always running after
+   boot; the RC's START button launches `/home/unitree/hhhh/iniciar_robo.sh`, which starts `assistente.py` and
+   `movimentos_militares.py`). Check with `systemctl is-active unitree-start-joystick.service`. Stopping it needs `sudo`, so
+   do it only with the user's explicit ok that session (or let them run it via `!`). It comes back after every reboot
+   (`Restart=always`), so re-check each time. Our tests use a separate USB joystick, not the RC.
 
 ## The hardware and the connection
 

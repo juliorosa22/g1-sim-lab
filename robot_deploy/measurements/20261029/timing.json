@@ -1,0 +1,104 @@
+{
+ "status": "timing rerun with ns timestamps; robot on support, zero torque; before/after stopping unitree-start-joystick.service",
+ "before": {
+  "lowstate": {
+   "n": 12196,
+   "rate_hz": 812.1,
+   "dt_ms": {
+    "mean": 1.231,
+    "std": 0.234,
+    "p50": 1.256,
+    "p99": 1.814,
+    "p99.9": 2.454,
+    "max": 6.129,
+    "min": 0.009
+   },
+   "gaps_gt_5ms": 2,
+   "gaps_gt_20ms": 0,
+   "tick_ms_unique_share": 0.963,
+   "tick_diff_counts": {
+    "0": 449,
+    "1": 11120,
+    "2": 3,
+    "3": 9,
+    "4": 56,
+    "5": 134
+   }
+  },
+  "lowcmd": {
+   "n": 11590,
+   "rate_hz": 772.1,
+   "dt_ms": {
+    "mean": 1.295,
+    "std": 0.324,
+    "p50": 1.258,
+    "p99": 2.077,
+    "p99.9": 2.806,
+    "max": 9.07,
+    "min": 0.0052
+   },
+   "gaps_gt_5ms": 2,
+   "gaps_gt_20ms": 0
+  }
+ },
+ "after": {
+  "lowstate": {
+   "n": 11739,
+   "rate_hz": 781.7,
+   "dt_ms": {
+    "mean": 1.279,
+    "std": 0.313,
+    "p50": 1.308,
+    "p99": 2.013,
+    "p99.9": 4.299,
+    "max": 7.078,
+    "min": 0.0127
+   },
+   "gaps_gt_5ms": 8,
+   "gaps_gt_20ms": 0,
+   "tick_ms_unique_share": 0.964,
+   "tick_diff_counts": {
+    "0": 417,
+    "1": 10715,
+    "2": 3,
+    "3": 8,
+    "4": 28,
+    "5": 56
+   }
+  },
+  "lowcmd": {
+   "n": 11154,
+   "rate_hz": 743.1,
+   "dt_ms": {
+    "mean": 1.346,
+    "std": 0.367,
+    "p50": 1.319,
+    "p99": 2.484,
+    "p99.9": 3.87,
+    "max": 6.977,
+    "min": 0.0067
+   },
+   "gaps_gt_5ms": 4,
+   "gaps_gt_20ms": 0
+  }
+ },
+ "command_latency": {
+  "note": "command message -> first joint response, measured with 1 kHz recorder timestamps; tau_est/dq/q thresholds 0.15 N*m / 0.05 rad/s / 0.5 mrad",
+  "at_50Hz_publish_ms": {
+   "wrist_yaw_R": "3-6",
+   "elbow_R": "3-6",
+   "ankle_pitch_L": "5-12",
+   "knee_L": "3-10"
+  },
+  "at_200Hz_publish_ms": {
+   "wrist_yaw_L": "106-141 (log-based, 5 ms grid)",
+   "wrist_yaw_R": "96-125 (log-based)",
+   "interpretation": "publish-rate effect (probable backlog), NOT a fixed path latency; withdrawn as a latency figure"
+  },
+  "lowstate_rate_hz": {
+   "zero_torque_or_standing": "780-810",
+   "debug_mode": 1040,
+   "with_full_rate_recorder_walking": 674
+  }
+ }
+}
