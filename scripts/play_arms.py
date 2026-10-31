@@ -147,7 +147,7 @@ input[type=range]{width:100%;accent-color:var(--acc);height:18px}
 </section>
 <section class="panel">
   <div class="row">
-    <label class="chk"><input type="checkbox" id="clamp" checked> limit to recommended range</label>
+    <button id="lock" class="on" title="locked: targets are clamped to the recommended range. unlocked: any pose within the joint limits">safe range: LOCKED</button>
     <label class="chk">arm speed <input type="range" id="speed" min="0.2" max="4" step="0.1" value="1" style="width:110px"><output id="speed_o">1.0</output> rad/s</label>
   </div>
   <div class="row">
@@ -158,8 +158,9 @@ input[type=range]{width:100%;accent-color:var(--acc);height:18px}
     <button id="random">random reach (human-like)</button>
     <label class="chk">speed <input type="range" id="rspeed" min="0.3" max="3" step="0.1" value="1" style="width:100px"><output id="rspeed_o">1.0</output> rad/s</label>
   </div>
-  <p class="note">Green band on each slider = recommended range (60% of the training arm range around the default). Outside it the robot
-  drifts and may step; far outside it falls (v10 fails with the arms held far to one side).</p>
+  <p class="note">Green band on each slider = safe range (60% of the training arm range around the default). While LOCKED the targets are held
+  inside it. UNLOCK to reach any pose the joints allow: outside the band the robot drifts and steps, far outside it falls (v10 fails with the arms
+  held far to one side). After a fall it respawns upright and the arms keep going to your slider values; "reset robot" also re-zeroes the drift.</p>
   <div id="sliders"></div>
 </section>
 </main>
@@ -195,7 +196,7 @@ async function poll(){
     $('t_z').textContent=t.z.toFixed(3)+' m'; $('t_tilt').textContent=t.tilt.toFixed(1)+'°';
     $('t_drift').textContent=t.drift_cm.toFixed(1)+' cm'; $('t_speed').textContent=(t.speed*100).toFixed(1)+' cm/s';
     $('t_lifts').textContent=t.lifts; $('t_falls').textContent=t.falls; $('t_fps').textContent=t.fps.toFixed(0)+' sim steps/s';
-    $('random').classList.toggle('on',s.random_reach);
+    $('random').classList.toggle('on',s.random_reach); renderLock(s.clamp);
     if(document.activeElement.type!=='range'){ // keep sliders in sync when the server changes them (presets, random reach)
       for(const j of s.joints){const i=$('s_'+j.name); if(i&&s.random_reach){i.value=j.target; $('o_'+j.name).textContent=(+j.target).toFixed(2)}}
     }
@@ -204,7 +205,14 @@ async function poll(){
 }
 $('speed').oninput=e=>{$('speed_o').textContent=(+e.target.value).toFixed(1); post('/config',{speed:+e.target.value})};
 $('rspeed').oninput=e=>{$('rspeed_o').textContent=(+e.target.value).toFixed(1); post('/config',{random_speed:+e.target.value})};
-$('clamp').onchange=e=>post('/config',{clamp:e.target.checked});
+async function setLock(on){
+  await post('/config',{clamp:on});
+  const s=await (await fetch('/state')).json(); lastState=s; // locking snaps targets back into the safe band: refresh the sliders
+  for(const j of s.joints){const i=$('s_'+j.name); if(i){i.value=j.target; const o=$('o_'+j.name); o.textContent=(+j.target).toFixed(2); o.className=(j.target<j.rec_lo-1e-6||j.target>j.rec_hi+1e-6)?'out':''}}
+  renderLock(on);
+}
+function renderLock(on){const b=$('lock'); b.classList.toggle('on',on); b.textContent=on?'safe range: LOCKED':'safe range: UNLOCKED (robot may fall)'; b.style.background=on?'':'var(--bad)'; b.style.borderColor=on?'':'var(--bad)'; b.style.color=on?'':'#fff'}
+$('lock').onclick=()=>setLock(!(lastState?lastState.clamp:true));
 $('random').onclick=()=>post('/config',{random_reach:!(lastState&&lastState.random_reach)});
 $('reset').onclick=()=>post('/action',{name:'reset'});
 $('push3').onclick=()=>post('/action',{name:'push',mag:0.3});
@@ -290,6 +298,9 @@ class Handler(BaseHTTPRequestHandler):
                     shared.random_speed = max(0.05, float(body["random_speed"]))
                 if "clamp" in body:
                     shared.clamp = bool(body["clamp"])
+                    if shared.clamp:  # re-locking pulls every stored target back into the safe band
+                        for j in shared.joints:
+                            shared.target[j["name"]] = min(max(shared.target[j["name"]], j["rec_lo"]), j["rec_hi"])
                 if "random_reach" in body:
                     shared.random_reach = bool(body["random_reach"])
             elif self.path == "/action":
