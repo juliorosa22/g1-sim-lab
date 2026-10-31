@@ -34,7 +34,7 @@ def add_base_height(cfg):
     )
 
 
-def add_pose(cfg, joint_names, std_walking=None):
+def add_pose(cfg, joint_names, std_walking=None, walking_scale=1.0):
     # keep only tolerance entries that match one of these joints (the leg-only v10 has no waist yaw)
     keep = lambda d: {k: v for k, v in d.items() if any(re.fullmatch(k, n) for n in joint_names)}  # noqa: E731
     cfg.rewards.pose = RewTerm(
@@ -45,6 +45,7 @@ def add_pose(cfg, joint_names, std_walking=None):
             "std_standing": keep(POSE_STD_STANDING),
             "std_walking": keep(std_walking or POSE_STD_WALKING),
             "walking_threshold": 0.05,
+            "walking_scale": walking_scale,
         },
     )
 
