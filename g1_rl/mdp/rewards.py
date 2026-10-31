@@ -120,14 +120,15 @@ class variable_posture(ManagerTermBase):
 
     def __call__(
         self, env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, command_name: str, std_standing: dict,
-        std_walking: dict, walking_threshold: float = 0.05, walking_scale: float = 1.0,
+        std_walking: dict, walking_threshold: float = 0.05, walking_scale: float = 1.0, std_scale: float = 1.0,
     ) -> torch.Tensor:
         del std_standing, std_walking  # resolved once in __init__
         asset = env.scene[asset_cfg.name]
         cmd = env.command_manager.get_command(command_name)
         speed = cmd[:, :2].norm(dim=1) + cmd[:, 2].abs()
         standing = (speed < walking_threshold).float().unsqueeze(1)
-        std = self.std_standing * standing + self.std_walking * (1.0 - standing)
+        # std_scale widens the standing tolerance (a curriculum anneals it to 1): an exp kernel at 0.05 rad gives a crouch zero reward and no gradient
+        std = self.std_standing * std_scale * standing + self.std_walking * (1.0 - standing)
         error = asset.data.joint_pos[:, self.joint_ids] - asset.data.default_joint_pos[:, self.joint_ids]
         reward = torch.exp(-torch.mean(torch.square(error) / torch.square(std), dim=1))
         # walking_scale 0 = the pull applies at zero command only (v9e): stepping is then not taxed by a posture bonus

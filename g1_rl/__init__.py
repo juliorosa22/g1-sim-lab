@@ -55,6 +55,7 @@ for _name, _mod, _env, _agent in (
     ("V9c", "v9c_env_cfg", "G1V9cEnvCfg", "G1V9cPPORunnerCfg"),  # v9b without the small-command deadband (warm start)
     ("V9d", "v9d_env_cfg", "G1V9dEnvCfg", "G1V9dPPORunnerCfg"),  # v8 + base height + sagittal-only pose, ramped (warm start from v8)
     ("V9e", "v9e_env_cfg", "G1V9eEnvCfg", "G1V9ePPORunnerCfg"),  # v8 + base height + stand-only pose pull, ramped (warm start from v8)
+    ("V9f", "v9f_env_cfg", "G1V9fEnvCfg", "G1V9fPPORunnerCfg"),  # v9e + ramped commands, stand/turn mix, annealed stand pull (warm start from v9e)
     ("V10", "v10_env_cfg", "G1V10EnvCfg", "G1V10PPORunnerCfg"),  # v7 + base height + pose reward (standing)
 ):
     for _suffix, _cfg_suffix in (("", ""), ("-Play", "_PLAY")):

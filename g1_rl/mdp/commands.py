@@ -25,7 +25,37 @@ if TYPE_CHECKING:
 class MixedVelocityCommand(UniformVelocityCommand):
     cfg: "MixedVelocityCommandCfg"
 
+    def __init__(self, cfg, env):
+        super().__init__(cfg, env)
+        self._target = torch.zeros_like(self.vel_command_b)  # what the planner asks for; vel_command_b ramps toward it
+
+    def reset(self, env_ids=None):
+        extras = super().reset(env_ids)
+        if self.cfg.ramp_lin > 0.0 or self.cfg.ramp_yaw > 0.0:
+            ids = slice(None) if env_ids is None else env_ids
+            self.vel_command_b[ids] = 0.0  # a new episode starts from rest, like the deployed controller after a stop
+        return extras
+
+    def _update_command(self):
+        if self.cfg.ramp_lin <= 0.0 and self.cfg.ramp_yaw <= 0.0:
+            return super()._update_command()
+        # the deployed controller ramps the planner's command at 1 m/s^2 and 2 rad/s^2 before the policy sees it; so does training
+        dt = self._env.step_dt
+        goal = self._target.clone()
+        goal[self.is_standing_env] = 0.0
+        cur = self.vel_command_b
+        d = goal[:, :2] - cur[:, :2]
+        n = d.norm(dim=1, keepdim=True).clamp_min(1e-9)
+        if self.cfg.ramp_lin > 0.0:
+            d = d * torch.clamp(self.cfg.ramp_lin * dt / n, max=1.0)
+        cur[:, :2] += d
+        dw = goal[:, 2] - cur[:, 2]
+        cur[:, 2] += dw.clamp(-self.cfg.ramp_yaw * dt, self.cfg.ramp_yaw * dt) if self.cfg.ramp_yaw > 0.0 else dw
+
     def _resample_command(self, env_ids: Sequence[int]):
+        ramped = self.cfg.ramp_lin > 0.0 or self.cfg.ramp_yaw > 0.0
+        ids0 = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+        prev = self.vel_command_b[ids0].clone() if ramped else None
         super()._resample_command(env_ids)
         ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
         cmd = self.vel_command_b
@@ -63,6 +93,9 @@ class MixedVelocityCommand(UniformVelocityCommand):
             # sees a tiny non-zero command (the controller applies the same deadband)
             cmd[ids[cmd[ids, :2].norm(dim=1) < db], :2] = 0.0
             cmd[ids[cmd[ids, 2].abs() < db], 2] = 0.0
+        if ramped:  # the new command is the target; the current command keeps going from where it was
+            self._target[ids] = cmd[ids]
+            cmd[ids] = prev
 
 
 @configclass
@@ -78,6 +111,10 @@ class MixedVelocityCommandCfg(UniformVelocityCommandCfg):
     """Probabilities of the single-axis modes; the remainder samples all three axes freely."""
     deadband: float = 0.0
     """Linear (norm) and yaw commands below this are zeroed at sampling. 0 = off (v2-v4)."""
+    ramp_lin: float = 0.0
+    """m/s^2: the command the policy sees moves toward the sampled target no faster than this (the controller uses 1.0). 0 = off."""
+    ramp_yaw: float = 0.0
+    """rad/s^2, same for the yaw rate (the controller uses 2.0). 0 = off."""
     p_slow: float = 0.0
     """Share of sampled commands whose magnitudes are redrawn into the slow ranges below (v9c). 0 = off."""
     slow_lin_range: tuple = (0.06, 0.3)
