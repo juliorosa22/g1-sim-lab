@@ -52,6 +52,7 @@ for _name, _mod, _env, _agent in (
     ("V1R", "v7_env_cfg", "G1V1ReplicaEnvCfg", "G1V1ReplicaPPORunnerCfg"),  # v1's recipe on v1's original plant (replication test)
     ("V9a", "v9_env_cfg", "G1V9aEnvCfg", "G1V9aPPORunnerCfg"),  # v8 + base height (posture fix, controlled)
     ("V9b", "v9_env_cfg", "G1V9bEnvCfg", "G1V9bPPORunnerCfg"),  # v8 + base height + whole-body pose reward
+    ("V9c", "v9c_env_cfg", "G1V9cEnvCfg", "G1V9cPPORunnerCfg"),  # v9b without the small-command deadband (warm start)
     ("V10", "v10_env_cfg", "G1V10EnvCfg", "G1V10PPORunnerCfg"),  # v7 + base height + pose reward (standing)
 ):
     for _suffix, _cfg_suffix in (("", ""), ("-Play", "_PLAY")):

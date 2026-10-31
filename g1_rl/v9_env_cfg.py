@@ -34,7 +34,7 @@ def add_base_height(cfg):
     )
 
 
-def add_pose(cfg, joint_names):
+def add_pose(cfg, joint_names, std_walking=None):
     # keep only tolerance entries that match one of these joints (the leg-only v10 has no waist yaw)
     keep = lambda d: {k: v for k, v in d.items() if any(re.fullmatch(k, n) for n in joint_names)}  # noqa: E731
     cfg.rewards.pose = RewTerm(
@@ -43,7 +43,7 @@ def add_pose(cfg, joint_names):
             "asset_cfg": SceneEntityCfg("robot", joint_names=list(joint_names), preserve_order=True),
             "command_name": "base_velocity",
             "std_standing": keep(POSE_STD_STANDING),
-            "std_walking": keep(POSE_STD_WALKING),
+            "std_walking": keep(std_walking or POSE_STD_WALKING),
             "walking_threshold": 0.05,
         },
     )

@@ -43,6 +43,20 @@ class MixedVelocityCommand(UniformVelocityCommand):
             cmd[lateral, 2] = 0.0
             cmd[rotate, 0] = 0.0
             cmd[rotate, 1] = 0.0
+        if self.cfg.p_slow > 0.0:
+            # v9c: a share of the commands is gentle, so the policy sees many examples of the small commands a planner sends
+            # near obstacles and doors. Direction and which axes are active are kept; only the magnitudes are redrawn.
+            slow = ids[torch.rand(len(ids), device=self.device) < self.cfg.p_slow]
+            lin = cmd[slow, :2]
+            n = lin.norm(dim=1, keepdim=True)
+            lo, hi = self.cfg.slow_lin_range
+            target = torch.empty_like(n).uniform_(lo, hi)
+            cmd[slow, :2] = torch.where(n > 1e-6, lin / n.clamp_min(1e-6) * target, lin)
+            wz = cmd[slow, 2]
+            lo, hi = self.cfg.slow_yaw_range
+            cmd[slow, 2] = torch.where(
+                wz.abs() > 1e-6, wz.sign() * torch.empty_like(wz).uniform_(lo, hi), wz
+            )
         db = self.cfg.deadband
         if db > 0.0:
             # commands this small are "stand still": make them exactly zero so training never
@@ -64,6 +78,10 @@ class MixedVelocityCommandCfg(UniformVelocityCommandCfg):
     """Probabilities of the single-axis modes; the remainder samples all three axes freely."""
     deadband: float = 0.0
     """Linear (norm) and yaw commands below this are zeroed at sampling. 0 = off (v2-v4)."""
+    p_slow: float = 0.0
+    """Share of sampled commands whose magnitudes are redrawn into the slow ranges below (v9c). 0 = off."""
+    slow_lin_range: tuple = (0.06, 0.3)
+    slow_yaw_range: tuple = (0.1, 0.5)
 
 
 class ArmPoseCommand(CommandTerm):
