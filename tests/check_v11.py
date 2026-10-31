@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks the v9f pieces:  python tests/check_v9f.py"""
+"""Checks the v11 pieces:  python tests/check_v11.py"""
 import os
 import sys
 
@@ -17,8 +17,8 @@ from g1_rl import mdp
 from isaaclab_tasks.utils import parse_env_cfg
 
 N = 512
-cfg = parse_env_cfg("G1-Walk-Flat-Inspire-V9f-v0", device="cuda:0", num_envs=N)
-env = gym.make("G1-Walk-Flat-Inspire-V9f-v0", cfg=cfg)
+cfg = parse_env_cfg("G1-Walk-Flat-Inspire-V11-v0", device="cuda:0", num_envs=N)
+env = gym.make("G1-Walk-Flat-Inspire-V11-v0", cfg=cfg)
 base = env.unwrapped
 env.reset()
 rm = base.reward_manager
@@ -61,6 +61,6 @@ for i in range(60):
 print(f"CHECK ramp: max change per step lin {worst_lin:.4f} (limit {1.0 * base.step_dt:.4f}), yaw {worst_yaw:.4f} (limit {2.0 * base.step_dt:.4f}); (step, vx, wz) {seen}")
 env.close()
 
-cfgp = parse_env_cfg("G1-Walk-Flat-Inspire-V9f-Play-v0", device="cuda:0", num_envs=8)
+cfgp = parse_env_cfg("G1-Walk-Flat-Inspire-V11-Play-v0", device="cuda:0", num_envs=8)
 print("CHECK play cfg ramp:", cfgp.commands.base_velocity.ramp_lin, cfgp.commands.base_velocity.ramp_yaw)
 app.close()

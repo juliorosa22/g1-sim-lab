@@ -156,8 +156,8 @@ class G1V9ePPORunnerCfg(G1WalkFlatPPORunnerCfg):
 
 
 @configclass
-class G1V9fPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+class G1V11PPORunnerCfg(G1WalkFlatPPORunnerCfg):
     def __post_init__(self):
         super().__post_init__()
-        self.experiment_name = "g1_v9f_stand_turn"
+        self.experiment_name = "g1_v11_stand_turn"
         self.max_iterations = 1500  # warm start from v9e

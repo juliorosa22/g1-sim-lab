@@ -1,12 +1,13 @@
-"""v9f: a policy that stands planted like v10 AND turns in place, for tight spaces.
+"""v11: a stand-and-turn specialist: planted like v10 at zero command, turns in place on a yaw-only command, creeps at low speed.
 
 Evidence (see docs and the turn/settle evaluation): v8/v9a turn in place well (0.45-0.48 rad/s at 0.5) but step at zero command;
 v9e holds a planted stand at zero command but crouches (base 0.76 m, knee 0.57 standing) and its slow yaw/sideways are weak;
 the stand-only policies (v1, v7, v10) were never trained on yaw-only commands, so they step during a turn and do not settle.
-Warm start from v9e (same 78 -> 13 interface), with:
+It is NOT a general walking policy: walking at speed is left to a separate walking-only policy (planned), and a selector hands over
+at about 0.3 m/s. Warm start from v9e (same 78 -> 13 interface), with:
   * commands the way the controller sends them: the policy sees the planner's command RAMPED at 1 m/s^2 and 2 rad/s^2, 0.05 deadband
-  * a command mix built for this: 25% stand, ~27% rotate-in-place (so also stand -> turn -> stand sequences), 25% of all commands redrawn gentle
-    (lin 0.06-0.3 m/s, yaw 0.1-0.5 rad/s), the rest walking
+  * a command mix built for this: 30% stand, ~30% rotate-in-place (so also stand -> turn -> stand sequences), 25% of all commands redrawn gentle
+    (lin 0.06-0.3 m/s, yaw 0.1-0.5 rad/s); the rest is slow translation, with a few faster ones (vx up to 0.6, vy +-0.3) as a margin for the handover
   * the pose pull at zero command only (v9e), now with an ANNEALED tolerance (6x -> 1x the 0.05 rad standing std over the ramp): an exp
     kernel at 0.05 gives a crouched stance zero reward and no gradient, which is why v9e could not climb out of its crouch
   * base height -30 (v9a/v9e -10 left it at 0.755-0.766 m)
@@ -31,11 +32,12 @@ STEPS_PER_ITER = 24
 RAMP_START_ITERS, RAMP_END_ITERS = 50, 600
 DEADBAND = 0.05
 RAMP_LIN, RAMP_YAW = 1.0, 2.0
-P_STAND, P_FORWARD, P_LATERAL, P_ROTATE, P_SLOW = 0.25, 0.15, 0.08, 0.27, 0.25
+P_STAND, P_FORWARD, P_LATERAL, P_ROTATE, P_SLOW = 0.30, 0.11, 0.07, 0.43, 0.25  # of the non-standing envs: 43% rotate-only, the rest mixed
+VX_RANGE, VY_RANGE, WZ_RANGE = (-0.3, 0.6), (-0.3, 0.3), (-1.0, 1.0)
 
 
 @configclass
-class G1V9fEnvCfg(G1V8EnvCfg):
+class G1V11EnvCfg(G1V8EnvCfg):
     def __post_init__(self):
         super().__post_init__()
         add_base_height(self)
@@ -74,11 +76,12 @@ class G1V9fEnvCfg(G1V8EnvCfg):
         cmd.p_forward_only, cmd.p_lateral_only, cmd.p_rotate_only = P_FORWARD, P_LATERAL, P_ROTATE
         cmd.p_slow = P_SLOW
         cmd.deadband = DEADBAND
+        cmd.ranges.lin_vel_x, cmd.ranges.lin_vel_y, cmd.ranges.ang_vel_z = VX_RANGE, VY_RANGE, WZ_RANGE
         cmd.ramp_lin, cmd.ramp_yaw = RAMP_LIN, RAMP_YAW
 
 
 @configclass
-class G1V9fEnvCfg_PLAY(G1V9fEnvCfg):
+class G1V11EnvCfg_PLAY(G1V11EnvCfg):
     def __post_init__(self):
         super().__post_init__()
         _play(self)

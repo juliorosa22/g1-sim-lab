@@ -49,6 +49,8 @@ REGISTRY = [
     dict(id="v9c", label="v9c  walk, v9b without the deadband", task="G1-Walk-Flat-Inspire-V9c-Play-v0", kind="walk", ckpts=["logs/lab_checkpoints/v9c/model_4498.pt"]),
     dict(id="v9d", label="v9d  walk, sagittal pose (stopped at 3850)", task="G1-Walk-Flat-Inspire-V9d-Play-v0", kind="walk", ckpts=["logs/lab_checkpoints/v9d/model_3850.pt"]),
     dict(id="v9e", label="v9e  walk, stand-only pose pull", task="G1-Walk-Flat-Inspire-V9e-Play-v0", kind="walk", ckpts=["logs/lab_checkpoints/v9e/model_4498.pt"]),
+    dict(id="v11", label="v11  stand + turn in place (slow speeds)", task="G1-Walk-Flat-Inspire-V11-Play-v0", kind="stand-turn",
+         ckpts=["logs/lab_checkpoints/v11/model_5998.pt"]),
     dict(id="v10", label="v10  stand (real plant, posture fix)", task="G1-Walk-Flat-Inspire-V10-Play-v0", kind="stand",
          ckpts=["logs/lab_checkpoints/v10/model_1499.pt"]),
 ]
@@ -56,7 +58,8 @@ REGISTRY = [
 LAB_RUNS = {"v2": None, "v7": "g1_v7_stand_real/2026-10-30_00-27-55/model_1499.pt", "v8": "g1_v8_walk_real/2026-10-30_00-26-40/model_2999.pt",
             "v9a": "g1_v9a_walk_height/2026-10-31_12-18-48/model_4498.pt", "v9b": "g1_v9b_walk_pose/2026-10-30_08-58-24/model_2999.pt",
             "v9c": "g1_v9c_walk_slow/2026-10-31_10-20-46/model_4498.pt", "v9d": "g1_v9d_walk_sagittal/2026-10-31_12-18-48/model_3850.pt",
-            "v9e": "g1_v9e_walk_standpull/2026-10-31_13-37-16/model_4498.pt", "v10": "g1_v10_stand_pose/2026-10-30_08-59-54/model_1499.pt",
+            "v9e": "g1_v9e_walk_standpull/2026-10-31_13-37-16/model_4498.pt",
+            "v11": "g1_v11_stand_turn/*/model_5998.pt", "v10": "g1_v10_stand_pose/2026-10-30_08-59-54/model_1499.pt",
             "v4": "g1_walk_flat_inspire_arms/2026-10-29_03-22-08/model_2999.pt"}
 
 
@@ -65,9 +68,9 @@ def find_checkpoint(entry):
     if LAB_RUNS.get(entry["id"]):
         cands.append("logs/rsl_rl/" + LAB_RUNS[entry["id"]])
     for c in cands:
-        p = os.path.join(REPO_ROOT, c)
-        if os.path.isfile(p):
-            return p
+        for p in sorted(glob.glob(os.path.join(REPO_ROOT, c))):
+            if os.path.isfile(p):
+                return p
     return None
 
 
@@ -341,13 +344,14 @@ pre{white-space:pre-wrap;color:var(--bad);font-size:12px;margin:6px 0 0}
 const $=id=>document.getElementById(id);
 const post=(url,body)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{});
 let joints=[], pendingArm={}, armTimer=null, last=null, ready=false, policies=[];
+const KIND={stand:'stand-only policy',walk:'walking policy','stand-turn':'stand + turn-in-place policy (slow speeds)'};
 // ---------------- policy selection
 async function loadPolicies(){
   policies=await (await fetch('/policies')).json(); const sel=$('policy'); sel.innerHTML='';
   for(const p of policies){const o=document.createElement('option'); o.value=p.id; o.textContent=p.label+(p.available?'':'  (no checkpoint here)'); o.disabled=!p.available; sel.appendChild(o)}
 }
 function choose(){const id=$('policy').value; const p=policies.find(x=>x.id===id); $('gainsbox').style.display=p&&p.gains?'flex':'none';
-  $('kind').textContent=p?(p.kind==='stand'?'stand-only policy':'walking policy'):''; post('/policy',{id,gains:$('gains').value}); setStatus('loading'); }
+  $('kind').textContent=p?(KIND[p.kind]):''; post('/policy',{id,gains:$('gains').value}); setStatus('loading'); }
 $('policy').onchange=choose; $('gains').onchange=choose;
 function setStatus(s,err){const e=$('status'); e.className='pill '+s; e.textContent=s==='loading'?'loading policy (about a minute)...':s; $('err').textContent=err||'';
   if(s==='ready'&&!ready){ready=true; $('cam').src='/stream?'+Date.now(); joints=[]; }
@@ -404,7 +408,7 @@ async function poll(){
     const st=await (await fetch('/status')).json();
     if(st.current&&$('policy').value!==st.current&&document.activeElement!==$('policy')) $('policy').value=st.current;
     if(st.gains) $('gains').value=st.gains;
-    const p=policies.find(x=>x.id===st.current); $('gainsbox').style.display=p&&p.gains?'flex':'none'; $('kind').textContent=p?(p.kind==='stand'?'stand-only policy':'walking policy'):'';
+    const p=policies.find(x=>x.id===st.current); $('gainsbox').style.display=p&&p.gains?'flex':'none'; $('kind').textContent=p?(KIND[p.kind]):'';
     setStatus(st.status,st.error);
     if(st.status==='ready'){
       const r=await fetch('/state'); if(r.ok){const s=await r.json(); last=s;
