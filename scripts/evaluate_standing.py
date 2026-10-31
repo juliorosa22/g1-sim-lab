@@ -15,6 +15,8 @@ by the policy; any arm-randomising command term in the task is removed):
   swing_both   both arms swing in antiphase (0.8 Hz)
   human_slow   random reaches between poses at <= 1.0 rad/s with 0.5-1.5 s pauses
   flail_fast   random poses at 3 rad/s, no pauses (stress)
+  mimic_<v>    human-imitation style: random reaches inside 60% of the arm range around the default pose, peak speed v rad/s
+               (0.5 / 1.0 / 1.5 / 2.0), 0.3-1.0 s pauses. What a vision pipeline following a person would command
 
 Metrics are taken over the window after the first 3 s, per env:
   drift        horizontal distance from where it was at 3 s to the end        (cm)
@@ -89,7 +91,9 @@ CALM_SPEED = 0.10  # looser bar used for shove recovery: the robot is no longer 
 CALM_YAW = 0.30
 MIN_AIR_S = 0.1  # a foot counts as lifted only if it stays off the ground this long (ignores force flicker)
 
-ARM_SCENARIOS = ["rest", "pitch_neg", "pitch_pos", "roll_out", "wave_right", "swing_both", "human_slow", "flail_fast"]
+ARM_SCENARIOS = ["rest", "pitch_neg", "pitch_pos", "roll_out", "wave_right", "swing_both", "human_slow", "flail_fast",
+                 "mimic_0.5", "mimic_1.0", "mimic_1.5", "mimic_2.0"]
+MIMIC_RANGE = 0.6
 PUSH_TIMES_S = (4.0, 9.0, 14.0)
 PUSH_MAGS = (0.3, 0.5, 0.7)
 PUSH_WINDOW_S = 4.5
@@ -107,6 +111,11 @@ class ArmDriver:
         self.goal = default.clone()
         self.hold = torch.full((n,), 1.0, device=device)
         self.speed, self.pause = {"human_slow": (1.0, (0.5, 1.5)), "flail_fast": (3.0, (0.0, 0.0))}.get(kind, (0, (0, 0)))
+        self.glo, self.ghi = lo, hi
+        if kind.startswith("mimic_"):
+            self.speed, self.pause = float(kind[len("mimic_"):]), (0.3, 1.0)
+            d0 = default[0]
+            self.glo, self.ghi = d0 + MIMIC_RANGE * (lo - d0), d0 + MIMIC_RANGE * (hi - d0)
         self.static = {}
         if kind == "pitch_neg":
             self.static = {"left_shoulder_pitch_joint": -1.0, "right_shoulder_pitch_joint": -1.0}
@@ -143,7 +152,7 @@ class ArmDriver:
         arrived = moving & (delta.abs().max(dim=1).values < 1e-3)
         if arrived.any():
             k = int(arrived.sum())
-            self.goal[arrived] = self.lo + torch.rand(k, len(self.lo), device=self.device) * (self.hi - self.lo)
+            self.goal[arrived] = self.glo + torch.rand(k, len(self.glo), device=self.device) * (self.ghi - self.glo)
             self.hold[arrived] = self.pause[0] + torch.rand(k, device=self.device) * (self.pause[1] - self.pause[0])
         self.hold = torch.where(self.hold > 0, self.hold - dt, self.hold)
         step = (self.goal - self.cur).clamp(-self.speed * dt, self.speed * dt)

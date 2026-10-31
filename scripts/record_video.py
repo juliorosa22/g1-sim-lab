@@ -27,7 +27,7 @@ from isaaclab.app import AppLauncher
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--task", default="G1-Walk-Flat-Inspire-Play-v0")
 parser.add_argument("--checkpoint", required=True)
-parser.add_argument("--scenario", choices=["showcase", "push", "stand"], default="showcase")
+parser.add_argument("--scenario", choices=["showcase", "push", "stand", "arms_mimic", "compare"], default="showcase")
 parser.add_argument("--out-dir", default=os.path.join(REPO_ROOT, "videos"))
 parser.add_argument("--title", default="Unitree G1 | RL walking policy | Isaac Lab + PPO")
 parser.add_argument("--width", type=int, default=1280)
@@ -65,6 +65,24 @@ SCENARIOS = {
         (12.0, (0.5, 0.0, 0.0), "Walking forward  0.5 m/s"),
         (3.0, (0.0, 0.0, 0.0), "Standing"),
     ],
+    "arms_mimic": [  # zero command; the arms follow random human-like reaches at increasing speed (what a pose-imitation pipeline sends)
+        (3.0, (0.0, 0.0, 0.0), "Standing, arms at rest"),
+        (10.0, (0.0, 0.0, 0.0), "Zero command | arm reaches at 0.5 rad/s"),
+        (10.0, (0.0, 0.0, 0.0), "Zero command | arm reaches at 1.0 rad/s"),
+        (10.0, (0.0, 0.0, 0.0), "Zero command | arm reaches at 1.5 rad/s"),
+        (10.0, (0.0, 0.0, 0.0), "Zero command | arm reaches at 2.0 rad/s"),
+    ],
+    "compare": [  # the commands the v9 variants differ on: stillness, slow motion, sideways, turning
+        (3.0, (0.0, 0.0, 0.0), "Standing (zero command)"),
+        (4.0, (0.2, 0.0, 0.0), "Slow forward  0.2 m/s"),
+        (4.0, (0.5, 0.0, 0.0), "Forward  0.5 m/s"),
+        (3.0, (0.0, 0.0, 0.0), "Stop (zero command)"),
+        (4.0, (0.0, 0.0, 0.3), "Turn in place  0.3 rad/s"),
+        (4.0, (0.0, 0.0, 0.5), "Turn in place  0.5 rad/s"),
+        (4.0, (0.0, 0.2, 0.0), "Sideways  0.2 m/s"),
+        (4.0, (0.5, 0.0, 0.5), "Forward 0.5 m/s + turn 0.5 rad/s"),
+        (3.0, (0.0, 0.0, 0.0), "Stop (zero command)"),
+    ],
     "stand": [  # zero command the whole time: does it stand still, and what does it do when shoved?
         (9.0, (0.0, 0.0, 0.0), "Standing (zero command)"),
         (11.0, (0.0, 0.0, 0.0), "Standing, being pushed"),
@@ -72,10 +90,46 @@ SCENARIOS = {
 }
 # scripted shoves: (time_s, (dvx, dvy) added to the base velocity in m/s)
 PUSHES = {
+    "arms_mimic": [],
+    "compare": [],
     "showcase": [],
     "push": [(3.0, (0.0, 0.8)), (6.0, (0.0, -0.8)), (9.0, (0.8, 0.0)), (13.0, (0.0, 0.6))],
     "stand": [(11.0, (0.0, 0.3)), (16.0, (0.4, 0.0))],
 }
+
+
+# arms_mimic: peak arm speed (rad/s) per segment, None = arms at rest. Targets are random reaches inside 60% of the arm range around
+# the default pose with 0.3-1.0 s pauses (the "mimic_<v>" scenarios of scripts/evaluate_standing.py)
+ARM_SPEEDS = {"arms_mimic": [None, 0.5, 1.0, 1.5, 2.0]}
+MIMIC_RANGE = 0.6
+PAUSE_S = (0.3, 1.0)
+
+
+class MimicArms:
+    def __init__(self, robot, device, dt):
+        from g1_rl.body_env_cfg import ARM_POSE_RANGES
+        from g1_rl.robot_cfg import ARM_JOINT_NAMES
+
+        self.robot, self.dt, self.device = robot, dt, device
+        self.ids = robot.find_joints(list(ARM_JOINT_NAMES), preserve_order=True)[0]
+        d0 = robot.data.default_joint_pos[0, self.ids].clone()
+        lo = torch.tensor([ARM_POSE_RANGES[n][0] for n in ARM_JOINT_NAMES], device=device)
+        hi = torch.tensor([ARM_POSE_RANGES[n][1] for n in ARM_JOINT_NAMES], device=device)
+        self.glo, self.ghi = d0 + MIMIC_RANGE * (lo - d0), d0 + MIMIC_RANGE * (hi - d0)
+        self.default, self.cur, self.goal, self.hold = d0, d0.clone(), d0.clone(), 0.0
+
+    def step(self, speed):
+        if speed is not None:
+            if self.hold > 0:
+                self.hold -= self.dt
+            elif (self.goal - self.cur).abs().max() < 1e-3:
+                self.goal = self.glo + torch.rand_like(self.glo) * (self.ghi - self.glo)
+                self.hold = PAUSE_S[0] + float(torch.rand(1)) * (PAUSE_S[1] - PAUSE_S[0])
+            else:
+                self.cur = self.cur + (self.goal - self.cur).clamp(-speed * self.dt, speed * self.dt)
+        else:
+            self.cur = self.cur + (self.default - self.cur).clamp(-0.5 * self.dt, 0.5 * self.dt)
+        self.robot.set_joint_position_target(self.cur.unsqueeze(0), joint_ids=self.ids)
 
 
 @torch.inference_mode()
@@ -99,6 +153,8 @@ def main():
     except ImportError:
         pass
 
+    if args.scenario in ARM_SPEEDS and hasattr(env_cfg.commands, "arm_pose"):
+        env_cfg.commands.arm_pose = None  # the arms are driven by this script
     cmd_cfg = env_cfg.commands.base_velocity
     cmd_cfg.heading_command = False
     cmd_cfg.mixed_sampling = False
@@ -114,6 +170,8 @@ def main():
     v.origin_type, v.asset_name, v.env_index = "asset_root", "robot", 0
     # offsets are relative to the robot's root (pelvis, ~0.8 m up), not the world origin
     v.eye, v.lookat = (1.0, -3.6, 0.35), (0.3, 0.0, -0.1)
+    if args.scenario in ARM_SPEEDS:
+        v.eye, v.lookat = (1.0, -2.6, 0.45), (0.1, 0.0, 0.1)  # closer, to read the arms
     v.resolution = (args.width, args.height)
 
     steps = int(round(total_s / (env_cfg.decimation * env_cfg.sim.dt)))
@@ -141,6 +199,7 @@ def main():
         timeline.append((t0, t0 + dur, cmd, label))
         t0 += dur
     push_steps = {int(round(t / dt)): d for t, d in pushes}
+    arms = MimicArms(robot, device, dt) if args.scenario in ARM_SPEEDS else None
 
     env.reset()
     obs = env.get_observations()
@@ -152,6 +211,9 @@ def main():
             if a <= t < b:
                 cmd = c
         term.vel_command_b[:] = torch.tensor(cmd, device=device)
+        if arms is not None:
+            seg = next((k for k, (a, b, _, _) in enumerate(timeline) if a <= t < b), len(timeline) - 1)
+            arms.step(ARM_SPEEDS[args.scenario][seg])
         if i in push_steps:
             vel = robot.data.root_vel_w.clone()
             vel[:, 0] += push_steps[i][0]
