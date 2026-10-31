@@ -137,3 +137,11 @@ class G1V9cPPORunnerCfg(G1WalkFlatPPORunnerCfg):
         super().__post_init__()
         self.experiment_name = "g1_v9c_walk_slow"
         self.max_iterations = 1500  # warm start from v9b (--resume --load_run ... --checkpoint ...)
+
+
+@configclass
+class G1V9dPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v9d_walk_sagittal"
+        self.max_iterations = 1500  # warm start from v8
