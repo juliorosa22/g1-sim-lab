@@ -50,7 +50,9 @@ REGISTRY = [
     dict(id="v9d", label="v9d  walk, sagittal pose (stopped at 3850)", task="G1-Walk-Flat-Inspire-V9d-Play-v0", kind="walk", ckpts=["logs/lab_checkpoints/v9d/model_3850.pt"]),
     dict(id="v9e", label="v9e  walk, stand-only pose pull", task="G1-Walk-Flat-Inspire-V9e-Play-v0", kind="walk", ckpts=["logs/lab_checkpoints/v9e/model_4498.pt"]),
     dict(id="v11", label="v11  stand + turn in place (slow speeds)", task="G1-Walk-Flat-Inspire-V11-Play-v0", kind="stand-turn",
-         ckpts=["logs/lab_checkpoints/v11/model_5998.pt"]),
+         ckpts=["logs/lab_checkpoints/v11/model_5997.pt"]),
+    dict(id="v12", label="v12  walk, smooth legs + clean stop (0.3 m/s and up)", task="G1-Walk-Flat-Inspire-V12-Play-v0", kind="walk",
+         ckpts=["logs/lab_checkpoints/v12/model_4998.pt"]),
     dict(id="v10", label="v10  stand (real plant, posture fix)", task="G1-Walk-Flat-Inspire-V10-Play-v0", kind="stand",
          ckpts=["logs/lab_checkpoints/v10/model_1499.pt"]),
 ]
@@ -59,7 +61,7 @@ LAB_RUNS = {"v2": None, "v7": "g1_v7_stand_real/2026-10-30_00-27-55/model_1499.p
             "v9a": "g1_v9a_walk_height/2026-10-31_12-18-48/model_4498.pt", "v9b": "g1_v9b_walk_pose/2026-10-30_08-58-24/model_2999.pt",
             "v9c": "g1_v9c_walk_slow/2026-10-31_10-20-46/model_4498.pt", "v9d": "g1_v9d_walk_sagittal/2026-10-31_12-18-48/model_3850.pt",
             "v9e": "g1_v9e_walk_standpull/2026-10-31_13-37-16/model_4498.pt",
-            "v11": "g1_v11_stand_turn/*/model_5998.pt", "v10": "g1_v10_stand_pose/2026-10-30_08-59-54/model_1499.pt",
+            "v11": "g1_v11_stand_turn/*/model_5997.pt", "v12": "g1_v12_walk/*/model_4998.pt", "v10": "g1_v10_stand_pose/2026-10-30_08-59-54/model_1499.pt",
             "v4": "g1_walk_flat_inspire_arms/2026-10-29_03-22-08/model_2999.pt"}
 
 
