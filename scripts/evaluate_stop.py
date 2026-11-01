@@ -32,6 +32,7 @@ parser.add_argument("--label", default="policy")
 parser.add_argument("--num_envs", type=int, default=128)
 parser.add_argument("--speeds", type=float, nargs="+", default=[0.5, 0.8])
 parser.add_argument("--no-ramp", action="store_true", help="drop the command to zero at once instead of ramping it down")
+parser.add_argument("--noise", action="store_true", help="enable observation noise (the Play tasks disable it)")
 parser.add_argument("--out", default=None)
 parser.add_argument("--seed", type=int, default=1)
 AppLauncher.add_app_launcher_args(parser)
@@ -76,7 +77,7 @@ def main():
     env_cfg.events.push_robot = None
     if hasattr(env_cfg.commands, "arm_pose"):
         env_cfg.commands.arm_pose = None
-    env_cfg.observations.policy.enable_corruption = False
+    env_cfg.observations.policy.enable_corruption = bool(args.noise)
 
     env = RslRlVecEnvWrapper(gym.make(args.task, cfg=env_cfg), clip_actions=agent_cfg.clip_actions)
     actor = load_actor(os.path.abspath(args.checkpoint), device)

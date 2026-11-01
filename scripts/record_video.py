@@ -27,12 +27,13 @@ from isaaclab.app import AppLauncher
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--task", default="G1-Walk-Flat-Inspire-Play-v0")
 parser.add_argument("--checkpoint", required=True)
-parser.add_argument("--scenario", choices=["showcase", "push", "stand", "arms_mimic", "compare"], default="showcase")
+parser.add_argument("--scenario", choices=["showcase", "push", "stand", "arms_mimic", "compare", "walkstop", "turnsettle"], default="showcase")
 parser.add_argument("--out-dir", default=os.path.join(REPO_ROOT, "videos"))
 parser.add_argument("--title", default="Unitree G1 | RL walking policy | Isaac Lab + PPO")
 parser.add_argument("--width", type=int, default=1280)
 parser.add_argument("--height", type=int, default=720)
 parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--noise", action="store_true", help="enable observation noise (the Play tasks disable it): the realistic condition")
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
 args.headless = True
@@ -83,6 +84,31 @@ SCENARIOS = {
         (4.0, (0.5, 0.0, 0.5), "Forward 0.5 m/s + turn 0.5 rad/s"),
         (3.0, (0.0, 0.0, 0.0), "Stop (zero command)"),
     ],
+    "turnsettle": [  # v11: yaw-only commands, each followed by zero command: does it turn, and does it settle planted again?
+        (3.0, (0.0, 0.0, 0.0), "Standing (zero command)"),
+        (3.0, (0.0, 0.0, 0.3), "Turn in place  0.3 rad/s"),
+        (5.0, (0.0, 0.0, 0.0), "Zero command: settles"),
+        (3.0, (0.0, 0.0, 0.5), "Turn in place  0.5 rad/s"),
+        (5.0, (0.0, 0.0, 0.0), "Zero command: settles"),
+        (3.0, (0.0, 0.0, -0.5), "Turn in place  -0.5 rad/s (other way)"),
+        (5.0, (0.0, 0.0, 0.0), "Zero command: settles"),
+        (3.0, (0.0, 0.0, 1.0), "Turn in place  1.0 rad/s"),
+        (5.0, (0.0, 0.0, 0.0), "Zero command: settles"),
+    ],
+    "walkstop": [  # a walker alone: steady walking at several speeds, each followed by a stop (the command is ramped down like the controller does)
+        (2.5, (0.0, 0.0, 0.0), "Standing"),
+        (5.0, (0.4, 0.0, 0.0), "Forward  0.4 m/s"),
+        (2.0, (0.2, 0.0, 0.0), "Slowing  (command ramps down)"),
+        (3.5, (0.0, 0.0, 0.0), "Stop (zero command)"),
+        (5.0, (0.8, 0.0, 0.0), "Forward  0.8 m/s"),
+        (3.5, (0.4, 0.0, 0.0), "Slowing  (command ramps down)"),
+        (3.5, (0.0, 0.0, 0.0), "Stop (zero command)"),
+        (5.0, (1.0, 0.0, 0.0), "Forward  1.0 m/s"),
+        (4.0, (0.5, 0.0, 0.0), "Slowing  (command ramps down)"),
+        (3.5, (0.0, 0.0, 0.0), "Stop (zero command)"),
+        (6.0, (0.5, 0.0, 0.5), "Forward 0.5 m/s + turn 0.5 rad/s"),
+        (3.5, (0.0, 0.0, 0.0), "Stop (zero command)"),
+    ],
     "stand": [  # zero command the whole time: does it stand still, and what does it do when shoved?
         (9.0, (0.0, 0.0, 0.0), "Standing (zero command)"),
         (11.0, (0.0, 0.0, 0.0), "Standing, being pushed"),
@@ -90,6 +116,8 @@ SCENARIOS = {
 }
 # scripted shoves: (time_s, (dvx, dvy) added to the base velocity in m/s)
 PUSHES = {
+    "turnsettle": [],
+    "walkstop": [],
     "arms_mimic": [],
     "compare": [],
     "showcase": [],
@@ -162,6 +190,8 @@ def main():
     cmd_cfg.resampling_time_range = (1.0e9, 1.0e9)
     env_cfg.episode_length_s = total_s + 5.0
     env_cfg.events.push_robot = None
+    if args.noise:
+        env_cfg.observations.policy.enable_corruption = True
     # start at the origin facing +x so the side-on camera frames the gait
     pose = env_cfg.events.reset_base.params["pose_range"]
     pose["x"], pose["y"], pose["yaw"] = (0.0, 0.0), (0.0, 0.0), (0.0, 0.0)
