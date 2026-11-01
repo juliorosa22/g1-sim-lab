@@ -95,6 +95,21 @@ def stand_feet_air(
     return _stand_mask(env, command_name, deadband, recovery_speed) * airborne
 
 
+def feet_swing_height(
+    env: ManagerBasedRLEnv, command_name: str, deadband: float, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg, target_z: float,
+) -> torch.Tensor:
+    """Unitree's feet_swing_height: sum over feet of (foot z - target)^2 while the foot is off the ground, only when a walk is commanded.
+
+    Pulls the swing foot to a fixed clearance: a foot dragged along the floor, or flung high, both cost. `target_z` is the height of the
+    ankle-roll link origin (it sits about 0.04 m up when the foot is flat), so a 0.08-0.10 target is a few centimetres of clearance.
+    """
+    sensor = env.scene.sensors[sensor_cfg.name]
+    in_contact = sensor.data.net_forces_w[:, sensor_cfg.body_ids, :].norm(dim=-1) > 1.0
+    z = env.scene[asset_cfg.name].data.body_pos_w[:, asset_cfg.body_ids, 2]
+    err = torch.square(z - target_z) * (~in_contact).float()
+    return err.sum(dim=1) * (1.0 - _standing(env, command_name, deadband))
+
+
 class variable_posture(ManagerTermBase):
     """Whole-body pose reward with a speed-dependent tolerance (after mjlab's `variable_posture`).
 

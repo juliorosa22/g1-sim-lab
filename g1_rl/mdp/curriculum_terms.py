@@ -34,3 +34,30 @@ def ramp_stand_rewards(
         cfg.params[param] = v0 + (v1 - v0) * f
         env.reward_manager.set_term_cfg(name, cfg)
     return f
+
+
+def ramp_reward_weights(
+    env: ManagerBasedRLEnv,
+    env_ids: torch.Tensor,
+    term_weights: dict,
+    start_step: int,
+    end_step: int,
+    anneal: dict | None = None,
+) -> float:
+    """Moves reward weights linearly from an old value to a new one: `term_weights` is name -> (weight at start, weight at end).
+
+    ramp_stand_rewards scales weights from 0, which suits new terms; this one also takes an existing term from its old weight to a stronger
+    one (e.g. action_rate_l2 -0.005 -> -0.05) without ever switching the old penalty off. `anneal` (name -> (param, start, end)) moves a
+    reward parameter along the same ramp. Called on every reset; idempotent. Steps are env steps (24 per PPO iteration).
+    """
+    f = (env.common_step_counter - start_step) / max(end_step - start_step, 1)
+    f = float(min(max(f, 0.0), 1.0))
+    for name, (w0, w1) in term_weights.items():
+        cfg = env.reward_manager.get_term_cfg(name)
+        cfg.weight = w0 + (w1 - w0) * f
+        env.reward_manager.set_term_cfg(name, cfg)
+    for name, (param, v0, v1) in (anneal or {}).items():
+        cfg = env.reward_manager.get_term_cfg(name)
+        cfg.params[param] = v0 + (v1 - v0) * f
+        env.reward_manager.set_term_cfg(name, cfg)
+    return f
