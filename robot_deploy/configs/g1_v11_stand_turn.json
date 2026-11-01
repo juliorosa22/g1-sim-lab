@@ -1,0 +1,316 @@
+{
+ "name": "v11_stand_turn",
+ "note": "Deployment contract of the v11 policy (stand + turn in place), Isaac Lab task G1-Walk-Flat-Inspire-V11-v0. Everything the controller needs, as trained. Python 3.8 / plain json on purpose (no yaml dependency on the robot). Verified against the simulation by robot_deploy/tests/contract_test.py.",
+ "control_hz": 50,
+ "gait_period_s": 0.8,
+ "obs_size": 78,
+ "action_size": 13,
+ "obs_layout": [
+  [
+   "gyro",
+   3
+  ],
+  [
+   "projected_gravity",
+   3
+  ],
+  [
+   "command",
+   3
+  ],
+  [
+   "joint_pos",
+   27
+  ],
+  [
+   "joint_vel",
+   27
+  ],
+  [
+   "last_action",
+   13
+  ],
+  [
+   "gait_clock",
+   2
+  ]
+ ],
+ "obs_scales": {
+  "gyro": 0.25,
+  "command": [
+   2.0,
+   2.0,
+   0.25
+  ],
+  "joint_vel": 0.05
+ },
+ "command": {
+  "deadband": 0.05,
+  "ramp_lin": 1.0,
+  "ramp_yaw": 2.0,
+  "trained_range": {
+   "vx": [
+    -0.3,
+    0.6
+   ],
+   "vy": [
+    -0.3,
+    0.3
+   ],
+   "wz": [
+    -1.0,
+    1.0
+   ]
+  }
+ },
+ "locked_motors": [
+  13,
+  14
+ ],
+ "hold_note": "motors 15-28 (arms) are not driven by the policy: hold them at their default with the kp/kd given; hands are a separate system",
+ "joints": [
+  {
+   "name": "left_hip_pitch_joint",
+   "motor": 0,
+   "default": -0.1,
+   "kp": 100,
+   "kd": 4,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "left_hip_roll_joint",
+   "motor": 1,
+   "default": 0.0,
+   "kp": 100,
+   "kd": 4,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "left_hip_yaw_joint",
+   "motor": 2,
+   "default": 0.0,
+   "kp": 100,
+   "kd": 4,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "left_knee_joint",
+   "motor": 3,
+   "default": 0.3,
+   "kp": 150,
+   "kd": 5,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "left_ankle_pitch_joint",
+   "motor": 4,
+   "default": -0.2,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "left_ankle_roll_joint",
+   "motor": 5,
+   "default": 0.0,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "right_hip_pitch_joint",
+   "motor": 6,
+   "default": -0.1,
+   "kp": 100,
+   "kd": 4,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "right_hip_roll_joint",
+   "motor": 7,
+   "default": 0.0,
+   "kp": 100,
+   "kd": 4,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "right_hip_yaw_joint",
+   "motor": 8,
+   "default": 0.0,
+   "kp": 100,
+   "kd": 4,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "right_knee_joint",
+   "motor": 9,
+   "default": 0.3,
+   "kp": 150,
+   "kd": 5,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "right_ankle_pitch_joint",
+   "motor": 10,
+   "default": -0.2,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "right_ankle_roll_joint",
+   "motor": 11,
+   "default": 0.0,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": 0.25,
+   "policy_controls": true
+  },
+  {
+   "name": "waist_yaw_joint",
+   "motor": 12,
+   "default": 0.0,
+   "kp": 200,
+   "kd": 6,
+   "action_scale": 0.2,
+   "policy_controls": true
+  },
+  {
+   "name": "left_shoulder_pitch_joint",
+   "motor": 15,
+   "default": 0.35,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "left_shoulder_roll_joint",
+   "motor": 16,
+   "default": 0.18,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "left_shoulder_yaw_joint",
+   "motor": 17,
+   "default": 0.0,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "left_elbow_joint",
+   "motor": 18,
+   "default": 0.87,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "left_wrist_roll_joint",
+   "motor": 19,
+   "default": 0.0,
+   "kp": 40,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "left_wrist_pitch_joint",
+   "motor": 20,
+   "default": 0.0,
+   "kp": 40,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "left_wrist_yaw_joint",
+   "motor": 21,
+   "default": 0.0,
+   "kp": 40,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "right_shoulder_pitch_joint",
+   "motor": 22,
+   "default": 0.35,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "right_shoulder_roll_joint",
+   "motor": 23,
+   "default": -0.18,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "right_shoulder_yaw_joint",
+   "motor": 24,
+   "default": 0.0,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "right_elbow_joint",
+   "motor": 25,
+   "default": 0.87,
+   "kp": 60,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "right_wrist_roll_joint",
+   "motor": 26,
+   "default": 0.0,
+   "kp": 40,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "right_wrist_pitch_joint",
+   "motor": 27,
+   "default": 0.0,
+   "kp": 40,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  },
+  {
+   "name": "right_wrist_yaw_joint",
+   "motor": 28,
+   "default": 0.0,
+   "kp": 40,
+   "kd": 3,
+   "action_scale": null,
+   "policy_controls": false
+  }
+ ]
+}
