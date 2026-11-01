@@ -1,11 +1,31 @@
 # controller/ (runs ON the robot)
 
-Not written yet. Synced to `~/g1_deploy/controller/` by `scripts/robot_sync.sh`.
+Status 2026-11-01: v11 (stand + turn in place) controller written, **tested on the laptop only, never run on the robot**. Synced to `~/g1_deploy/controller/` by `scripts/robot_sync.sh` (dry-run first; `--apply` needs the user's yes).
+
+| file | role |
+|---|---|
+| `observation.py`, `policy.py`, `commands.py` | simulation session: 78-value observation, numpy network, command deadband + ramp (contract test passes) |
+| `state.py` | `DdsLink` (rt/lowstate in, rt/lowcmd out, foreign-publisher detection), `ReplayState` (laptop), `NullPublisher` |
+| `safety.py` | limits and checks: stale state, NaN, tilt 25 deg, speed 5 rad/s, per-motor torque caps, tracking error 0.30 rad, motor temperature, loop period |
+| `run.py` | phase machine RAMP, HOLD, BLEND, RUN, STOP; `--plan`, dry run (default), `--publish` |
+
+```
+python3 run.py --plan                                   # preflight + the plan text for approval; publishes nothing
+python3 run.py                                          # DRY RUN: logs the commands it WOULD send to ~/g1_recordings/controller/<stamp>/log.csv
+CONTROLLER_CONFIRM=yes-<stage> python3 run.py --publish --stage <stage>   # publishes rt/lowcmd: only after the user's yes for THIS run
+```
+Tests (laptop, no robot): `tests/contract_test.py` (vs Isaac Lab), `tests/real_state_check.py` (real standing recording), `tests/test_runner.py` (phases, every safety trip -> stop sequence,
+dry run sends nothing, publish refused without confirmation; also mutation-checked: removing the kd damping, the tilt check or the invalid-state stop makes it fail).
+Known gaps: damping from PC2 is unverified in debug mode; after publishing ends the motors go to mode 0 (limp); torque caps and the tracking limit are proposals to review per run;
+the gait clock starts when BLEND starts; stage B yaw commands need `--allow-turn` and are clamped at 0.5 rad/s.
+
+(Original plan below, kept for the parts not written yet.)
 
 ## Constraints from the robot (checked 2026-10-29)
-- Jetson, Linux 5.10.104-tegra, **Python 3.8.10**, PyTorch 2.4.1 (CUDA availability not checked), `unitree_sdk2py` installed.
+- Jetson, Linux 5.10.104-tegra, **Python 3.8.10**, PyTorch 2.4.1 (CPU-only build: `cuda.is_available()` False), `unitree_sdk2py` installed.
 - Write Python 3.8-compatible code. The policies are small MLPs: running them with numpy on CPU is enough and avoids
-  torch/CUDA concerns inside a 20 ms loop (decide after measuring).
+  torch/CUDA concerns inside a 20 ms loop. **Measured 2026-10-29:** single-threaded numpy ~0.3 ms per call at 50 Hz (set OPENBLAS_NUM_THREADS=1), TensorRT FP32 ~1 ms,
+  torch CPU 1.5 ms mean with a 48 ms worst case. See `docs/open_issues.md`.
 
 ## Planned shape
 ```

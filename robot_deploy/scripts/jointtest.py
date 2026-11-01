@@ -178,8 +178,9 @@ class Link:
         self.pub.Write(c)
 
 
-def preflight(link, quiet=False):
-    """Read-only checks. Returns (problems, warnings, q0)."""
+def preflight(link, quiet=False, ignore=()):
+    """Read-only checks. Returns (problems, warnings, q0). `ignore`: joints exempt from the 'robot is moving' check (a damping-only joint, kp = 0, has no
+    position target, so the user may move it while the test starts)."""
     problems, warns = [], []
     t0 = time.monotonic()
     while link.st is None and time.monotonic() - t0 < 2.0:
@@ -195,7 +196,7 @@ def preflight(link, quiet=False):
     st = link.st
     if link.n_cmd_seen > 0:
         problems.append("another publisher is active on rt/lowcmd (%d msgs in ~1.5 s): the robot is not in debug/low-level mode" % link.n_cmd_seen)
-    still = max(abs(x) for i, x in enumerate(st["dq"]) if i not in ABSENT)
+    still = max(abs(x) for i, x in enumerate(st["dq"]) if i not in ABSENT and i not in ignore)
     if still > 0.5:
         problems.append("robot is moving: max |dq| = %.2f rad/s" % still)
     bad = [i for i in range(N) if i not in ABSENT and st["mode"][i] != 1]
@@ -232,7 +233,9 @@ def main():
     args = ap.parse_args()
 
     link = Link()
-    problems, warns, q0 = preflight(link)
+    damp_only = args.joint if (args.kp is not None and args.kp == 0.0 and args.joint is not None) else None
+    ignore = (damp_only,) if damp_only is not None else ()
+    problems, warns, q0 = preflight(link, ignore=ignore)
     if args.check:
         print("PROBLEMS:", problems or "none")
         print("WARNINGS:", warns or "none")
@@ -276,10 +279,10 @@ def main():
     for s in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         signal.signal(s, lambda *_: sig.update(abort="signal"))
     q1 = list(link.st["q"]) if link.st else None
-    if q1 is None or max(abs(q1[i] - q0[i]) for i in range(N) if i not in ABSENT) > 0.05:
+    if q1 is None or max(abs(q1[i] - q0[i]) for i in range(N) if i not in ABSENT and i not in ignore) > 0.05:
         print("NOT RUNNING: joints moved more than 0.05 rad since the preflight; re-run the dry run so the start pose is current")
         return 1
-    q0 = q1
+    q0 = q1                                   # also refreshes the damping-only joint's start position
     link.start_publisher()
     hold_kp = [0.0 if i in ABSENT else NOMINAL[i][0] * args.hold_scale for i in range(N)]
     hold_kd = [0.0 if i in ABSENT else NOMINAL[i][1] * args.hold_scale for i in range(N)]

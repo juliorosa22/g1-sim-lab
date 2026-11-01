@@ -1,0 +1,18 @@
+# Builds the C++ pieces against Unitree's SDK installed on the robot (/usr/local, `find_package(unitree_sdk2)`).
+#   cd controller_cpp && mkdir -p build && cd build && cmake .. && make -j4
+cmake_minimum_required(VERSION 3.16)
+project(g1_controller_cpp CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+find_package(unitree_sdk2 REQUIRED)
+add_executable(stoptest_probe probe/stoptest_probe.cpp)
+target_link_libraries(stoptest_probe unitree_sdk2)
+target_compile_options(stoptest_probe PRIVATE -Wall -Wextra)
+add_executable(g1_bridge bridge/g1_bridge.cpp)
+target_link_libraries(g1_bridge unitree_sdk2)
+target_include_directories(g1_bridge PRIVATE bridge)
+target_compile_options(g1_bridge PRIVATE -Wall -Wextra)

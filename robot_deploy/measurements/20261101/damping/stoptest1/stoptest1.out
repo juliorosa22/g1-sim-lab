@@ -1,0 +1,10 @@
+  *** STOP TEST: hold the MEASURED pose (gains 30%->100%) for 4.0 s, then the stop sequence (kp fades 0.5 s, kd-only damping 3.0 s), then publishing ends. No ramp, no policy. ***
+PLAN v11_stand_turn | PUBLISHING | publish rate 50 Hz | mode: publish
+  phases: RAMP 3.0 s (current pose -> default, gain scale 30%->100% over 2 s) | HOLD 2.0 s | BLEND 5.0 s (alpha 0->1) | RUN 10.0 s | STOP: kp fades over 0.5 s, then kd-only damping 3.0 s, then publishing ends
+  gains (kp/kd): legs hip p,r,y 100/4 100/4 100/4, knee 150/5, ankle p,r 60/3 60/3 | waist yaw 200/6 | arms held at default: shoulders+elbow 60/3, wrists 40/3 | waist roll/pitch 0/0, hands untouched
+  action scale legs 0.25, waist yaw 0.2 ; targets = default + scale * action * alpha
+  safety: stale state > 50 ms | NaN/inf | tilt > 25 deg | any joint speed > 5.0 rad/s | |tau_est| above the per-motor cap (e.g. hip pitch 60, knee 80, ankle 40, waist yaw 50, arms 25 N*m) | tracking error |q - target| > 0.30 rad | motor > 70 C | loop period > 40 ms | STOP file / signal
+  command: zero
+  start pose vs default: max |diff| 0.493 rad at left_elbow_joint ; the RAMP moves every joint by that much over 3.0 s (0.247 rad/s at most)
+PREFLIGHT problems: none | warnings: ['motors report mode 0 (disabled until the first command): limbs may be free to swing']
+END {'ticks': 225, 'stop_reason': 'loop period 44 ms', 'trips': [(0.965, 'loop period 44 ms')], 'cycle_ms': {'mean': 5.629140653359678, 'p99': 16.144380319710752, 'max': 19.625166999503563}, 'period_ms': {'mean': 20.002162763392203, 'p99': 22.91141545954817, 'max': 44.22138799964159}, 'published': None}

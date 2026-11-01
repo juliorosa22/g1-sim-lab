@@ -1,0 +1,15 @@
+PLAN stoptest_probe (C++) | PUBLISHING | 50 Hz | HOLD 4.0 s (gains 30%->100% over 2 s) then STOP: kp fade 0.5 s, kd-only damping 3.0 s, then publishing ends
+  gains legs kp 100/100/100/150/60/60 kd 4/4/4/5/3/3 | waist yaw 200/6 | arms 60/3, wrists 40/3 | waist roll/pitch 0/0 | target = the measured pose
+  safety: stale > 50 ms | NaN | tilt > 25 deg | speed > 5 rad/s | |tau_est| caps (hip 60/80/60, knee 80, ankle 40, waist 50, arms 25) | tracking > 0.30 rad | motor > 70 C | STOP file | signals. NO loop-period trip (it is measured).
+PREFLIGHT states received 1567 (CRC mismatches 0), foreign lowcmd msgs 0
+PREFLIGHT problems: none
+END reason: finished (stop test) | ticks 375 | writes ok 375 failed 0 | state msgs 9508 (CRC mismatches 0)
+TIMING (ms)
+  write (DDS)    mean   0.201  p50   0.203  p99   0.257  p99.9   0.294  max   0.294 ms   (> 5 ms: 0, > 15 ms: 0)
+  fill           mean   0.000  p50   0.000  p99   0.001  p99.9   0.001  max   0.001 ms   (> 5 ms: 0, > 15 ms: 0)
+  checksum       mean   0.026  p50   0.024  p99   0.034  p99.9   0.035  max   0.035 ms   (> 5 ms: 0, > 15 ms: 0)
+  send total     mean   0.227  p50   0.229  p99   0.290  p99.9   0.318  max   0.318 ms   (> 5 ms: 0, > 15 ms: 0)
+  wake lateness  mean   0.070  p50   0.070  p99   0.081  p99.9   0.088  max   0.088 ms   (> 5 ms: 0, > 15 ms: 0)
+  tick period    mean  20.000  p50  20.000  p99  20.011  p99.9  20.022  max  20.022 ms   (> 5 ms: 375, > 15 ms: 375)
+  tick cycle     mean   0.248  p50   0.248  p99   0.321  p99.9   0.385  max   0.385 ms   (> 5 ms: 0, > 15 ms: 0)
+  state age      mean   0.520  p50   0.511  p99   1.109  p99.9   1.158  max   1.158 ms   (> 5 ms: 0, > 15 ms: 0)

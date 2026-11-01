@@ -31,6 +31,8 @@ Procedure for the robot states follows Unitree's `deploy_real/README.md`.
 - [ ] Standing policy only, then walking policy only, at tiny commands, still hoisted.
 
 - [ ] Plant identification (hoisted, one joint at a time, low gains): follow `docs/hoisted_joint_tests.md`; each run needs its own yes.
+- [ ] Damping check in debug mode (stop sequence): `docs/damping_test_plan.md`, before Stage 2 of the v11 task.
+- [ ] Pending requests from the simulation session (mass and hands; leg plant identification at operating gains): `docs/hardware_requests_from_sim.md`.
 
 ## Stage 5: feet touching down, hoist still taking weight
 - [ ] Lower slowly, standing policy only. Watch for oscillation. Be ready to e-stop.

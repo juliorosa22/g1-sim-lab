@@ -1,0 +1,127 @@
+{
+ "policies": [
+  {
+   "file": "walk_v4_20261029",
+   "role": "walk",
+   "version": "v4",
+   "checkpoint": "logs/rsl_rl/g1_walk_flat_inspire_stand6/warm_start_v4/model_2999.pt",
+   "checkpoint_sha256": "801c5da680bf2800864832c814b61f3767bb5fcf4064419b6ebb66cac12b33c0",
+   "checkpoint_format": "rsl-rl 3.x",
+   "checkpoint_iter": 2999,
+   "obs_size": 84,
+   "action_size": 15,
+   "layers": [
+    [
+     256,
+     84
+    ],
+    [
+     128,
+     256
+    ],
+    [
+     128,
+     128
+    ],
+    [
+     15,
+     128
+    ]
+   ],
+   "activation": "ELU",
+   "exported": "2026-10-29T23:24:43",
+   "onnx_sha256": "eff577f84c41fe1736c8eaa452767bb538b96343e142ab67c69aa18861e1e259",
+   "npz_sha256": "3f31badb9ae14ceb78659cf94c532064b0961a8c4fd40481d3d1daad023db6f7",
+   "verification": {
+    "max_abs_err_onnxruntime_vs_torch": 7.62939453125e-06,
+    "max_abs_err_numpy_vs_torch": 1.1444091796875e-05,
+    "max_abs_action": 97.3254623413086,
+    "n_test_vectors": 3200
+   },
+   "torch": "2.7.0+cu128",
+   "onnx_opset": 13
+  },
+  {
+   "file": "stand_v1_20261029",
+   "role": "stand",
+   "version": "v1",
+   "checkpoint": "logs/rsl_rl/g1_walk_flat_inspire/2026-10-28_20-48-49/model_1499.pt",
+   "checkpoint_sha256": "fe58f84d9a0b0b69d652a4fda84ff894d42998b7c5fbdb543c5d3abc0a9b635a",
+   "checkpoint_format": "rsl-rl 3.x",
+   "checkpoint_iter": 1499,
+   "obs_size": 47,
+   "action_size": 12,
+   "layers": [
+    [
+     256,
+     47
+    ],
+    [
+     128,
+     256
+    ],
+    [
+     128,
+     128
+    ],
+    [
+     12,
+     128
+    ]
+   ],
+   "activation": "ELU",
+   "exported": "2026-10-29T23:24:44",
+   "onnx_sha256": "e5274a453d3a2554170560a3cb8e5d01b49efc162c326c85e3f5012065214391",
+   "npz_sha256": "6a21283ccbce7bc2b5bbacd6fecbb45191bb309fac568503927a161d36cce8f9",
+   "verification": {
+    "max_abs_err_onnxruntime_vs_torch": 1.52587890625e-05,
+    "max_abs_err_numpy_vs_torch": 1.52587890625e-05,
+    "max_abs_action": 121.67710876464844,
+    "n_test_vectors": 3200
+   },
+   "torch": "2.7.0+cu128",
+   "onnx_opset": 13
+  },
+  {
+   "file": "stand_turn_v11_20261101",
+   "role": "stand_turn",
+   "version": "v11",
+   "checkpoint": "logs/lab_checkpoints/v11/model_5997.pt",
+   "checkpoint_sha256": "93632909f304c992318b419bafb3e42ad1613ff78ed4929d1ef714af24b9b201",
+   "checkpoint_format": "rsl-rl 5.x",
+   "checkpoint_iter": 5997,
+   "obs_size": 78,
+   "action_size": 13,
+   "layers": [
+    [
+     256,
+     78
+    ],
+    [
+     128,
+     256
+    ],
+    [
+     128,
+     128
+    ],
+    [
+     13,
+     128
+    ]
+   ],
+   "activation": "ELU",
+   "exported": "2026-11-01T01:44:15",
+   "onnx_sha256": "d271e833d27f2c56fd67f12c8b98ac806b4604ec3e90777778cbd13d661b7f0b",
+   "npz_sha256": "da17c9e1f804815565be7c5b229a59bea0cf65cdbd2547f19d8f67ae3447ce73",
+   "verification": {
+    "max_abs_err_onnxruntime_vs_torch": 7.62939453125e-06,
+    "max_abs_err_numpy_vs_torch": 1.9073486328125e-05,
+    "max_abs_action": 177.8550262451172,
+    "n_test_vectors": 3200
+   },
+   "torch": "2.7.0+cu128",
+   "onnx_opset": 13
+  }
+ ]
+}
