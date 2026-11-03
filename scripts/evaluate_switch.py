@@ -46,6 +46,9 @@ parser.add_argument("--stand-label", default="v1")
 parser.add_argument("--num_envs", type=int, default=128)
 parser.add_argument("--noise", action="store_true", help="observation noise for both policies")
 parser.add_argument("--arms", choices=["rest", "random"], default="rest")
+parser.add_argument("--route", choices=["norm", "forward"], default="norm",
+                    help="norm: walk on norm(vx, vy) + |wz| (v1/v4 style). forward: walk only on the FORWARD command vx; sideways, "
+                         "yaw-only, backward and creeping stay with the stander (v11 + v12 pair: use --enter-walk 0.3 --exit-walk 0.2)")
 parser.add_argument("--enter-walk", type=float, default=0.08)
 parser.add_argument("--exit-walk", type=float, default=0.04)
 parser.add_argument("--debounce-walk", type=float, default=0.2, help="s above enter-walk before switching to walking")
@@ -250,7 +253,7 @@ def main():
             events.append({"t": t, "type": "shove", "magnitude": shove_steps[i]})
 
         # selector
-        s = float(cmd_shaped[:2].norm() + cmd_shaped[2].abs())
+        s = float(cmd_shaped[0]) if args.route == "forward" else float(cmd_shaped[:2].norm() + cmd_shaped[2].abs())
         if mode == STAND:
             up = up + 1 if s > args.enter_walk else 0
             if up >= n_up:
