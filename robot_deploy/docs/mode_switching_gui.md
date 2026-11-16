@@ -4,6 +4,8 @@ Written 2026-11-16 by the simulation session. Code: `gui/modes.py` (logic and SD
 tests `tests/test_modes.py` (22 checks, mock robot, all pass). **Nothing here has been run against the robot.** Every sequence below that touches modes is an
 UNVERIFIED hypothesis until a hoisted test with the user's explicit yes (`CLAUDE.md` rules 2 and 3 apply to each run).
 
+The step-by-step test for the hardware session (what to check, what needs the user's yes, what to record) is `docs/task_hardware_console_test.md`.
+
 ## Run
     python3 robot_deploy/gui/server.py --mock                      # no robot: mock backend + test-pattern camera, http://localhost:8770
     python3 robot_deploy/gui/server.py --real --interface eth0     # the robot (user's yes for that run); camera: --camera ros (default with --real) | none | URL
