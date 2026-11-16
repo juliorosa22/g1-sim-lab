@@ -169,3 +169,19 @@ class G1V12PPORunnerCfg(G1WalkFlatPPORunnerCfg):
         super().__post_init__()
         self.experiment_name = "g1_v12_walk"
         self.max_iterations = 2000  # warm start from v9b
+
+
+@configclass
+class G1V11bPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v11b_wide"
+        self.max_iterations = 1000  # warm start from v11
+
+
+@configclass
+class G1V12bPPORunnerCfg(G1WalkFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.experiment_name = "g1_v12b_wide"
+        self.max_iterations = 1500  # warm start from v12

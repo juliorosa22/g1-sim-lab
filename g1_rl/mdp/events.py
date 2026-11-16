@@ -36,3 +36,17 @@ def randomize_gyro_bias(env: ManagerBasedEnv, env_ids: torch.Tensor | None, bias
     gyro the actor sees. The first hardware session measured a constant pelvis-gyro bias of about
     [-0.0004, 0.0043, 0.0010] rad/s. Startup mode."""
     env.gyro_bias = torch.empty(env.num_envs, 3, device=env.device).uniform_(*bias_range)
+
+
+def randomize_effort_limit_scale(
+    env: ManagerBasedEnv, env_ids: torch.Tensor | None, scale_range: tuple[float, float], asset_cfg: SceneEntityCfg
+):
+    """Scales the torque limit of the explicit-PD actuators that drive `asset_cfg`'s joints, one factor per env (a weaker motor or a
+    sagging supply). The plant sweep (logs/eval/plant) showed torque x0.6 costs 4-6% falls; the trained range is 1.0 only. Startup mode."""
+    asset = env.scene[asset_cfg.name]
+    n = env.num_envs
+    factor = torch.empty(n, 1, device=env.device).uniform_(*scale_range)
+    for actuator in asset.actuators.values():
+        if not hasattr(actuator, "positions_delay_buffer"):  # the explicit, delayed PD actuators (legs, waist yaw)
+            continue
+        actuator.effort_limit = actuator.effort_limit * factor

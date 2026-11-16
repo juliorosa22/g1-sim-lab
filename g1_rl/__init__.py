@@ -57,6 +57,8 @@ for _name, _mod, _env, _agent in (
     ("V9e", "v9e_env_cfg", "G1V9eEnvCfg", "G1V9ePPORunnerCfg"),  # v8 + base height + stand-only pose pull, ramped (warm start from v8)
     ("V11", "v11_env_cfg", "G1V11EnvCfg", "G1V11PPORunnerCfg"),  # stand-and-turn specialist: ramped commands, stand/yaw mix, annealed stand pull (warm start from v9e)
     ("V12", "v12_env_cfg", "G1V12EnvCfg", "G1V12PPORunnerCfg"),  # walking-only: smooth legs, clean stop, ramped commands (warm start from v9b)
+    ("V11b", "v11b_env_cfg", "G1V11bEnvCfg", "G1V11bPPORunnerCfg"),  # v11 retrained with the wider plant randomisation (warm start from v11)
+    ("V12b", "v12b_env_cfg", "G1V12bEnvCfg", "G1V12bPPORunnerCfg"),  # v12 retrained with the wider plant randomisation (warm start from v12)
     ("V10", "v10_env_cfg", "G1V10EnvCfg", "G1V10PPORunnerCfg"),  # v7 + base height + pose reward (standing)
 ):
     for _suffix, _cfg_suffix in (("", ""), ("-Play", "_PLAY")):
