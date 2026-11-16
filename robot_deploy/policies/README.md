@@ -1,13 +1,17 @@
 # policies/ (exported, deployed to the robot)
 
+**Standard policies (2026-11-16): v11 `stand_turn_v11_20261101` and v12 `walk_v12_20261116`.** v4 and v1 below are legacy (different interfaces, never on the robot).
+
 Exported 2026-10-29 (ONNX + npz + test vectors; `manifest.json` has hashes and verification). Synced to `~/g1_deploy/policies/` by `scripts/robot_sync.sh`.
 
-## Manifest (fill in when exporting)
+## Manifest
 
 | file | policy | trained from | obs to actions | format | exported on |
 |---|---|---|---|---|---|
-| `walk_v4_20261029.{onnx,npz}` (+ `_testvec.npz`) | walking "v4" | laptop copy `logs/rsl_rl/g1_walk_flat_inspire_stand6/warm_start_v4/model_2999.pt` (iteration 2999, 84-256-128-128-15; the file the v6 run warm-starts from; hash vs the lab file `.../arms/2026-10-29_03-22-08/model_2999.pt` not compared) | 84 to 15 | ONNX opset 13, fp32 + numpy npz | 2026-10-29 |
-| `stand_v1_20261029.{onnx,npz}` (+ `_testvec.npz`) | standing "v1" | laptop `logs/rsl_rl/g1_walk_flat_inspire/2026-10-28_20-48-49/model_1499.pt` | 47 to 12 | ONNX opset 13, fp32 + numpy npz | 2026-10-29 |
+| `stand_turn_v11_20261101.{onnx,npz}` (+ `_testvec.npz`) | **STANDARD**: v11 stand, turn in place, creep (contract `configs/g1_v11_stand_turn.json`) | lab `logs/rsl_rl/g1_v11_stand_turn/2026-10-31_19-23-12/model_5997.pt` | 78 to 13 | ONNX opset 13, fp32 + numpy npz | 2026-11-01 |
+| `walk_v12_20261116.{onnx,npz}` (+ `_testvec.npz`) | **STANDARD**: v12 forward walking (contract `configs/g1_v12_walk.json`) | lab `logs/rsl_rl/g1_v12_walk/2026-10-31_22-48-27/model_4998.pt` | 78 to 13 | ONNX opset 13, fp32 + numpy npz | 2026-11-16 |
+| `walk_v4_20261029.{onnx,npz}` (+ `_testvec.npz`) | LEGACY walking "v4" | laptop copy `logs/rsl_rl/g1_walk_flat_inspire_stand6/warm_start_v4/model_2999.pt` (iteration 2999, 84-256-128-128-15; the file the v6 run warm-starts from; hash vs the lab file `.../arms/2026-10-29_03-22-08/model_2999.pt` not compared) | 84 to 15 | ONNX opset 13, fp32 + numpy npz | 2026-10-29 |
+| `stand_v1_20261029.{onnx,npz}` (+ `_testvec.npz`) | LEGACY standing "v1" | laptop `logs/rsl_rl/g1_walk_flat_inspire/2026-10-28_20-48-49/model_1499.pt` | 47 to 12 | ONNX opset 13, fp32 + numpy npz | 2026-10-29 |
 
 ## Notes for exporting
 - Only the **actor** is needed (deterministic mean, no exploration noise); both are `MLP in-256-128-128-out`, ELU, no

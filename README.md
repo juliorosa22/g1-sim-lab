@@ -8,6 +8,8 @@ Current stage: **Sense** -- a G1 spawned in Isaac Sim's `Simple_Room` sample
 scene, standing on a validated PD pose, publishing RTX lidar, RealSense-style
 RGB-D camera, and IMU data over ROS2.
 
+**Policies for the real robot (standard as of 2026-11-16): v11 (stand, turn in place, creep) and v12 (forward walking)**, deployed through `robot_deploy/` (start with `robot_deploy/CLAUDE.md`). Their training, evaluation scripts and results are under `g1_rl/`, `scripts/` and `robot_deploy/docs/`.
+
 ## Machines
 
 This repo runs on two machines with different paths -- see "Per-machine

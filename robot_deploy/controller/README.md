@@ -1,5 +1,6 @@
 # controller/ (runs ON the robot)
 
+Status 2026-11-16: v11 and v12 are the standard policies (see `../CLAUDE.md`); `selector.py` exists with tests, but `run.py` still loads only v11 (wiring: `../docs/task_runpy_selector_wiring.md`).
 Status 2026-11-01: v11 (stand + turn in place) controller written, **tested on the laptop only, never run on the robot**. Synced to `~/g1_deploy/controller/` by `scripts/robot_sync.sh` (dry-run first; `--apply` needs the user's yes).
 
 | file | role |

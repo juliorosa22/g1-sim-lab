@@ -21,14 +21,16 @@ Credentials come from the project's `.env` (`ROBOT_HOST`, `ROBOT_USER`, `ROBOT_P
 
 | Path | What |
 |---|---|
-| `configs/g1_walk_stand.yaml` | Deployment contract: joint order and motor indices, gains, action scales, observation layout, policies, selector, limits |
-| `controller/` | The code that runs on the robot (to be written) |
-| `policies/` | Exported policies and their manifest (to be exported) |
+| `configs/g1_v11_stand_turn.json`, `configs/g1_v12_walk.json` | Deployment contracts of the STANDARD policies v11 and v12 (`g1_walk_stand.yaml` is the legacy v4/v1 contract) |
+| `controller/` | The code that runs on the robot (v11 runner `run.py`, observation, policy, commands, selector; v12 wiring pending) |
+| `policies/` | Exported policies and their manifest (v11 and v12 are the standard ones) |
+| `gui/` | Hardware console: camera, mode observer, guarded mode switching (mock-tested only) |
 | `scripts/` | Connection and sync helpers |
 | `docs/bringup_checklist.md` | Staged bring-up with safety gates |
 | `docs/open_issues.md` | Known mismatches and unvalidated assumptions |
 
 ## Status
 
-Connection verified (2026-10-29). The controller and policy exports do not exist yet, and no policy
-trained in this project has run on the robot. See `docs/open_issues.md` before any run.
+**Standard policies for the real robot: v11 (stand, turn in place, creep) and v12 (forward walking), switched by `controller/selector.py`** (see `CLAUDE.md`, "What is being deployed").
+v11 has been through staged bring-up up to 30 s of free standing (2026-11-01); its turn in the air has not completed yet. v12 is exported and passes the contract test but has not run on the robot.
+See `docs/open_issues.md` before any run.

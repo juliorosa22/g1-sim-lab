@@ -1,3 +1,6 @@
+# LEGACY (2026-11-16): this is the contract of the old v4 walk / v1 stand pair (84 -> 15, 47 -> 12). The STANDARD policies are v11 and v12:
+#   configs/g1_v11_stand_turn.json and configs/g1_v12_walk.json (78 -> 13). Kept for the measurements and history; do not deploy v4 / v1.
+#
 # Deployment contract for the G1 walk/stand controller (g1_rl policies v4 "walk" and v1 "stand").
 #
 # Sources: g1_rl/robot_cfg.py, g1_rl/walk_env_cfg.py, g1_rl/body_env_cfg.py,

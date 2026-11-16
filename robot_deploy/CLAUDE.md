@@ -47,7 +47,7 @@ robot_deploy/
   CLAUDE.md                 this file (context for a dedicated session)
   README.md                 human overview and quick start
   configs/
-    g1_walk_stand.yaml      THE deployment contract: joint order and motor indices, gains, defaults, action
+    g1_v11_stand_turn.json / g1_v12_walk.json   THE deployment contracts of the standard policies (g1_walk_stand.yaml is the legacy v4/v1 one)
                             scales, observation layout and scales, both policies, selector, command limits
   controller/               code that runs ON the robot (not written yet; see controller/README.md)
   policies/                 exported policies + manifest (see policies/README.md)
@@ -60,20 +60,24 @@ robot_deploy/
 Only `configs/`, `controller/` and `policies/` are synced to the robot (`robot_sync.sh`); `README.md`
 files, `docs/` and `scripts/` stay on the laptop.
 
-## What is being deployed
+## What is being deployed (STANDARD policies, decided 2026-11-16)
 
-Two policies behind a selector (the "switching controller", prototyped in the parent repo's
-`scripts/evaluate_switch.py`):
+**v11 and v12 are the standard policies for the real robot.** Both share one interface (78 observation values -> 13 actions: 12 leg joints + waist yaw; waist roll/pitch are locked on this unit),
+50 Hz, a 0.8 s gait clock that always runs, command deadband 0.05 and ramp 1 m/s^2 / 2 rad/s^2 (`controller/commands.py`).
 
-| | walking policy ("v4") | standing policy ("v1") |
+| | v11 (stand, turn in place, creep) | v12 (walking) |
 |---|---|---|
-| obs to actions | 84 to 15 (legs + waist) | 47 to 12 (legs) |
-| used when | `norm(vx, vy) + abs(wz)` above 0.08 | below 0.04 (hysteresis) |
-| behaviour (simulation) | tracks commands; steps in place at zero command | stands without stepping; falls under hard shoves |
+| files | `policies/stand_turn_v11_20261101.{onnx,npz}`, `configs/g1_v11_stand_turn.json` | `policies/walk_v12_20261116.{onnx,npz}`, `configs/g1_v12_walk.json` |
+| used when | stand, yaw-only, sideways, backward, forward below 0.3 m/s | forward command above 0.3 m/s (selector: enter 0.3, exit 0.2) |
+| recommended command limits (sim) | vx -0.3..0.5, vy +-0.25, wz +-0.8 (first runs: wz <= 0.5) | vx -0.2..0.8 (first runs <= 0.3), vy +-0.25, wz +-0.5; forward commands only |
+| hardware status | stages 0-4 done (free standing 30 s, tilt 1.3 deg); turn in the air tripped on standing-era limits, not yet rerun | NOT run on the robot; not wired into `run.py` |
 
-Both are plain MLPs (ELU, no input normalisation) running at **50 Hz** on a 0.8 s gait clock. Full detail
-in `configs/g1_walk_stand.yaml`. **No g1_rl policy has run on hardware yet.** Unitree's own pretrained
-policy is the only one with documented real-G1 deployment (`external_refs/unitree_rl_gym/deploy/deploy_real`).
+The selector is `controller/selector.py` (tests pass); wiring it and v12 into `controller/run.py` is `docs/task_runpy_selector_wiring.md`. Limits, delay budgets and plant sensitivities:
+`docs/sim_update_for_hardware_20261116.md`, `docs/sim_delay_sweep_v11.md`, `docs/sim_delay_sweep_v12.md`.
+Both are plain MLPs (ELU, no input normalisation). Do not use anything else without the user's decision:
+- v1 (47 -> 12) and v4 (84 -> 15) and `configs/g1_walk_stand.yaml` are LEGACY (kept for the measurements and history): v4 drives waist roll/pitch, which this unit does not have; neither ever ran on the robot.
+- v11b / v12b (wider plant randomisation, `docs/sim_wide_randomization_results.md`) are sim-only alternatives, not exported; v11 and v12 stay the standard unless the hardware shows a soft or weak plant.
+**Only v11 up to stage 4 has been on the robot.** Every first run of anything new follows the dry run -> hoisted -> ground order and needs the user's yes.
 
 ## Where things come from (parent repo, `../`)
 
@@ -88,7 +92,7 @@ policy is the only one with documented real-G1 deployment (`external_refs/unitre
 
 ## Conventions
 
-- `configs/g1_walk_stand.yaml` is the single source of truth for numbers. The controller reads it; don't
+- `configs/g1_v11_stand_turn.json` and `configs/g1_v12_walk.json` are the single source of truth for numbers of the standard policies. The controller reads it; don't
   hard-code gains, scales or joint order elsewhere. If you change a value, say why in `docs/open_issues.md`.
 - Scripts are idempotent and non-destructive: dry-run first, never `--delete`, never start the robot.
 - Any simulation/hardware difference you discover goes in `docs/open_issues.md` the same day.
