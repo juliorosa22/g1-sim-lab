@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>G1 hardware console</title>
+<style>
+:root{--bg:#101418;--panel:#1a2027;--ink:#e6edf3;--mute:#8b98a5;--ok:#3fb950;--warn:#d29922;--bad:#f85149;--acc:#58a6ff;--line:#2d3640}
+@media (prefers-color-scheme: light){:root{--bg:#f4f6f8;--panel:#fff;--ink:#16202a;--mute:#5b6875;--line:#d5dce3}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,sans-serif}
+header{display:flex;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font-size:16px;margin:0}.pill{padding:2px 10px;border-radius:99px;border:1px solid var(--line);font-size:12px}
+main{display:grid;grid-template-columns:minmax(300px,1.4fr) minmax(300px,1fr);gap:12px;padding:12px 16px}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+h2{font-size:13px;margin:0 0 8px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+img#cam{width:100%;border-radius:6px;background:#000;min-height:180px}
+button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font:inherit;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}button.danger{border-color:var(--bad);color:var(--bad)}button.big{width:100%;padding:14px;font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center}.k{color:var(--mute)}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:3px 6px;border-bottom:1px solid var(--line);text-align:left}
+#log{max-height:200px;overflow:auto;font:12px ui-monospace,monospace;white-space:pre-wrap}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.banner{padding:8px 12px;border-radius:6px;margin-bottom:8px;border:1px solid var(--warn);color:var(--warn)}
+</style></head><body>
+<header><h1>G1 hardware console</h1><span class="pill" id="backend">-</span><span class="pill" id="world">-</span><span class="pill" id="armedpill">disarmed</span></header>
+<main>
+<div>
+ <section><h2>RealSense (color)</h2><img id="cam" alt="camera"><div class="k" id="camage"></div></section>
+ <section style="margin-top:12px"><h2>Robot state (read only)</h2><table id="st"></table></section>
+ <section style="margin-top:12px"><h2>Mode observer: what changes when you press the RC</h2>
+  <div class="k">Every change of onboard mode name, FSM id and mode_machine, no commands sent. Use it to learn the RC sequences.</div>
+  <table id="obs"><tr><th>time</th><th>mode</th><th>FSM</th><th>mode_machine</th></tr></table></section>
+</div>
+<div>
+ <section><h2>Take over</h2>
+  <button class="big danger" id="damp">DAMP (onboard FSM 1) - no arming needed</button>
+  <div class="k" style="margin-top:6px">Works while Unitree's service runs. In debug mode use the controller's stop sequence or scripts/robot_estop.sh.</div></section>
+ <section style="margin-top:12px"><h2>Mode changes</h2>
+  <div id="mockbanner" class="banner" style="display:none">MOCK backend: nothing is connected to a robot.</div>
+  <div class="row"><label><input type="checkbox" id="arm"> <b>ARM</b> the console (mode changes allowed)</label></div>
+  <div class="row"><label><input type="checkbox" id="supported"> robot is hoisted / supported, e-stop in hand</label></div>
+  <div class="row"><button id="enter">Enter debug mode (release Unitree's service)</button><span class="k">only from damp or zero torque</span></div>
+  <div class="row"><button id="back">Hand back to Unitree (then damp)</button><span class="k">needs: no rt/lowcmd publisher</span></div>
+  <div class="row"><input id="mname" placeholder="mode name (if none was remembered)" size="22"><button id="sel">Select mode</button></div>
+  <h2 style="margin-top:12px">Onboard FSM (only with Unitree's service running)</h2>
+  <div class="row" id="fsm"></div></section>
+ <section style="margin-top:12px"><h2>Log</h2><div id="log"></div></section>
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+const FSM=[[0,'zero torque',0],[1,'damp',0],[3,'sit',1],[500,'start',1],[702,'lie to stand',1],[706,'squat <-> stand',1]];
+for(const [id,name,needs] of FSM){const b=document.createElement('button');b.textContent=id+' '+name;b.onclick=()=>act('fsm',{id,supported:$('supported').checked},`Set onboard FSM ${id} (${name})?`);$('fsm').appendChild(b);}
+async function post(path,body){const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});return r.json();}
+async function act(path,body,question){if(question&&!confirm(question))return;const r=await post(path,Object.assign({confirm:true},body||{}));if(!r.ok)alert('Refused: '+r.error);}
+$('arm').onchange=e=>post('arm',{on:e.target.checked});
+$('damp').onclick=async()=>{const r=await post('damp',{});if(!r.ok)alert(r.error);};
+$('enter').onclick=()=>act('enter_debug',{supported:$('supported').checked},'Release Unitree\'s motion service? The robot must be hoisted or supported.');
+$('back').onclick=()=>act('hand_back',{then_fsm:1},'Hand the robot back to Unitree\'s controller (it will start in damp)?');
+$('sel').onclick=()=>act('select_name',{name:$('mname').value,then_fsm:1},'Select onboard mode "'+$('mname').value+'" (it will start in damp)?');
+$('cam').src='/camera.mjpg';
+const t=ts=>new Date(ts*1000).toLocaleTimeString();
+async function tick(){
+ try{const s=await (await fetch('/state')).json();
+  $('backend').textContent=s.backend||'-';$('mockbanner').style.display=(s.backend==='MockBackend')?'block':'none';
+  const w=s.world||'unknown';$('world').textContent=w==='onboard'?'ONBOARD (Unitree controls)':w==='debug'?'DEBUG (our commands)':'mode unknown';
+  $('world').className='pill '+(w==='onboard'?'ok':w==='debug'?'warn':'bad');
+  $('armedpill').textContent=s.armed?'ARMED':'disarmed';$('armedpill').className='pill '+(s.armed?'bad':'');
+  if($('arm').checked!==!!s.armed)$('arm').checked=!!s.armed;
+  const ls=s.lowstate||{};
+  $('st').innerHTML=[['mode name',JSON.stringify(s.mode_name)],['FSM id',s.fsm_id==null?'-':s.fsm_id+' ('+(s.fsm_text||'?')+')'],['remembered name',s.remembered_name||'-'],
+   ['mode_machine',ls.mode_machine??'-'],['tilt',ls.tilt_deg==null?'-':ls.tilt_deg.toFixed(1)+' deg'],['max |tau_est|',ls.max_abs_tau==null?'-':ls.max_abs_tau.toFixed(1)+' N*m'],
+   ['lowstate age',ls.age_s==null?'-':(ls.age_s*1000).toFixed(0)+' ms'],['rt/lowcmd',s.lowcmd_hz==null?'unknown':s.lowcmd_hz.toFixed(0)+' msg/s']].map(r=>`<tr><td class=k>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  $('camage').textContent=s.camera==null?'no frame yet':('last frame '+s.camera.toFixed(1)+' s ago');
+  $('obs').innerHTML='<tr><th>time</th><th>mode</th><th>FSM</th><th>mode_machine</th></tr>'+(s.observed||[]).slice().reverse().map(o=>`<tr><td>${t(o.t)}</td><td>${JSON.stringify(o.mode_name)}</td><td>${o.fsm_id??'-'}</td><td>${o.mode_machine??'-'}</td></tr>`).join('');
+  $('log').textContent=(s.log||[]).slice().reverse().map(l=>t(l[0])+'  '+l[1]).join('\n');
+ }catch(e){$('world').textContent='server unreachable';$('world').className='pill bad';}
+}
+setInterval(tick,500);tick();
+</script></body></html>
