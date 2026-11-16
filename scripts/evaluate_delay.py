@@ -36,6 +36,7 @@ parser.add_argument("--num_envs", type=int, default=64)
 parser.add_argument("--seeds", type=int, default=3)
 parser.add_argument("--noise", action="store_true")
 parser.add_argument("--quick", action="store_true", help="1 seed, shorter stand: a smoke test")
+parser.add_argument("--walk", action="store_true", help="walking scenarios for v12 (forward 0.5, 0.8, 1.0 m/s, and 0.8 m/s with shoves) instead of the stand and turn ones")
 parser.add_argument("--only", default=None, help="comma list of settings to run, e.g. action:0,obs:20,stall:3 (default: the whole sweep)")
 parser.add_argument("--out", default=None)
 AppLauncher.add_app_launcher_args(parser)
@@ -71,6 +72,9 @@ STILL_SPEED, STILL_YAW, STILL_HOLD_S = 0.03, 0.10, 0.5
 
 
 def scenarios(quick):
+    if args.walk:  # (name, yaw, duration, shoves, vx): stand 3 s, ramp 1 m/s^2 to vx, hold
+        return [("walk0.5", 0.0, 15.0, (), 0.5), ("walk0.8", 0.0, 15.0, (), 0.8), ("walk1.0", 0.0, 15.0, (), 1.0),
+                ("walk0.8_push", 0.0, 20.0, (8.0, 12.0, 16.0), 0.8)]
     return [("stand", 0.0, 10.0 if quick else 30.0, ()), ("turn0.3", 0.3, STAND_PRE + 0.3 / YAW_RAMP + TURN_HOLD + TURN_AFTER, ()),
             ("turn0.5", 0.5, STAND_PRE + 0.5 / YAW_RAMP + TURN_HOLD + TURN_AFTER, ()), ("push0.3", 0.0, 20.0, (4.0, 9.0, 14.0))]
 
@@ -119,7 +123,8 @@ def main():
                 buf.set_time_lag(lags)
 
     def run(kind, value, scen):
-        name, yaw, duration, shoves = scen
+        name, yaw, duration, shoves = scen[:4]
+        vx_goal = scen[4] if len(scen) > 4 else 0.0
         torch.manual_seed(17)
         env.reset()
         set_lags(value / PHYS_MS if kind == "action" else 0)
@@ -131,7 +136,7 @@ def main():
         alive = torch.ones(n, dtype=torch.bool, device=device)
         stall_left = torch.zeros(n, dtype=torch.long, device=device)
         prev_action = torch.zeros(n, 13, device=device)
-        cmd, wz_acc, wz_cnt = 0.0, torch.zeros(n, device=device), 0
+        cmd, cmd_x, wz_acc, wz_cnt = 0.0, 0.0, torch.zeros(n, device=device), 0
         turn_end = STAND_PRE + yaw / YAW_RAMP + TURN_HOLD if yaw else None
         win0 = STAND_PRE
         tilt2, tilt_max, da2, cnt = torch.zeros(n, device=device), torch.zeros(n, device=device), torch.zeros(n, device=device), 0
@@ -149,7 +154,8 @@ def main():
             t = i * dt
             goal = yaw if (yaw and STAND_PRE <= t < turn_end) else 0.0
             cmd += max(-YAW_RAMP * dt, min(YAW_RAMP * dt, goal - cmd))
-            term.vel_command_b[:] = torch.tensor([0.0, 0.0, cmd], device=device)
+            cmd_x += max(-1.0 * dt, min(1.0 * dt, (vx_goal if t >= STAND_PRE else 0.0) - cmd_x))
+            term.vel_command_b[:] = torch.tensor([cmd_x, 0.0, cmd], device=device)
             robot.set_joint_position_target(arm_default, joint_ids=arm_ids)
             if i in shove_steps:
                 ang = torch.rand(n, device=device) * 2 * math.pi
