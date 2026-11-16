@@ -55,7 +55,8 @@ Gating steps I recommend, each needing the user's explicit yes at the time:
 1. Wire the selector and the v12 network into `run.py` as a dry run (computes, sends nothing); check the contract test and the loop timing on the Jetson (0.3 ms per policy call measured for v11).
 2. Hoisted, feet in the air, forward 0.2-0.3 m/s: joint speeds and torques will exceed the standing-era trips more than the turn did; relax the trips with numbers from a new demand table (ask me: `scripts/evaluate_joint_demands.py` has a walking mode to add).
 3. A gantry or harness that carries weight for the first ground steps; first ground command 0.2 m/s, then 0.3.
-Not yet done in sim: the v12 delay sweep results (running), a wider-randomization retrain (friction down to 0.15, independent kp/kd, link masses) and the "trip on the ground" question (Request 2).
+Delay budget for v12 (full table `docs/sim_delay_sweep_v12.md`): no extra falls up to +20 ms of action delay or observation age, at most 0.5-1% up to +30 ms, 2-8% at +40 ms, about half fall at +60 ms; late ticks up to 5 (100 ms) at 1% per tick cost at most 1.6%. Do not exceed +30 ms extra in total; the pipeline measured on the robot (about 10-15 ms) is inside the trained range.
+Not yet done in sim: a wider-randomization retrain (friction down to 0.15, independent kp/kd, link masses) and the "trip on the ground" question (Request 2).
 
 ## 7. Open from the earlier requests
 - Request 2 (behaviour after a trip while standing on the ground: fade, reduced gains, longer fade; time to fall, base speed at contact, peak torque): still to do in simulation.
