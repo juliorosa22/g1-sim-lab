@@ -48,7 +48,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:3px 6px;b
 const $=id=>document.getElementById(id);
 const FSM=[[0,'zero torque',0],[1,'damp',0],[3,'sit',1],[500,'start',1],[702,'lie to stand',1],[706,'squat <-> stand',1]];
 for(const [id,name,needs] of FSM){const b=document.createElement('button');b.textContent=id+' '+name;b.onclick=()=>act('fsm',{id,supported:$('supported').checked},`Set onboard FSM ${id} (${name})?`);$('fsm').appendChild(b);}
-async function post(path,body){const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});return r.json();}
+async function post(path,body){const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/json','X-GUI-Token':'__TOKEN__'},body:JSON.stringify(body||{})});return r.json();}
 async function act(path,body,question){if(question&&!confirm(question))return;const r=await post(path,Object.assign({confirm:true},body||{}));if(!r.ok)alert('Refused: '+r.error);}
 $('arm').onchange=e=>post('arm',{on:e.target.checked});
 $('damp').onclick=async()=>{const r=await post('damp',{});if(!r.ok)alert(r.error);};

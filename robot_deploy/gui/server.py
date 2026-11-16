@@ -9,8 +9,10 @@ refuses unsafe requests (see its docstring). It never publishes motor commands. 
 The "damp" button works without arming when the onboard service runs. In debug mode use the controller's stop sequence or scripts/robot_estop.sh.
 """
 import argparse
+import hmac
 import json
 import os
+import secrets
 import sys
 import threading
 import time
@@ -21,6 +23,8 @@ sys.path.insert(0, HERE)
 from modes import Backend, MockBackend, ModeError, ModeManager  # noqa: E402
 
 MANAGER, CAMERA = None, None
+TOKEN = secrets.token_urlsafe(32)  # per process; injected into the page, required on every POST (a web page from another origin cannot read it)
+ALLOWED_HOSTS, ALLOWED_ORIGINS = set(), set()
 LATEST = {"snap": None}
 
 
@@ -67,8 +71,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path in ("/", "/index.html"):
+            if self.headers.get("Host") not in ALLOWED_HOSTS:
+                return self._send(403, "text/plain", b"forbidden host")
             with open(os.path.join(HERE, "static", "index.html"), "rb") as f:
-                return self._send(200, "text/html; charset=utf-8", f.read())
+                return self._send(200, "text/html; charset=utf-8", f.read().replace(b"__TOKEN__", TOKEN.encode()))
         if self.path == "/state":
             snap = dict(LATEST["snap"] or {})
             snap["log"] = [(t, m) for t, m in MANAGER.log[-40:]]
@@ -99,6 +105,12 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.path.startswith("/api/"):
             return self._send(404, "text/plain", b"not found")
+        # Anything that can change the robot's mode must come from OUR page: JSON content type (forces a CORS preflight we never answer), our own
+        # Host and Origin (blocks DNS rebinding and other sites), and the per-process token in a custom header.
+        origin = self.headers.get("Origin")
+        if (self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json" or self.headers.get("Host") not in ALLOWED_HOSTS
+                or (origin and origin not in ALLOWED_ORIGINS) or not hmac.compare_digest(self.headers.get("X-GUI-Token", ""), TOKEN)):
+            return self._send(403, "text/plain", b"forbidden")
         try:
             n = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(n) or b"{}")
@@ -141,6 +153,9 @@ def main():
         from camera import UrlCamera
         CAMERA = UrlCamera(cam)
     threading.Thread(target=poll_loop, daemon=True).start()
+    names = {"127.0.0.1", "localhost", args.host} - {"0.0.0.0", ""}
+    ALLOWED_HOSTS.update("%s:%d" % (n, args.port) for n in names)
+    ALLOWED_ORIGINS.update("http://%s:%d" % (n, args.port) for n in names)
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     print("[g1-gui] %s backend, camera %s: http://%s:%d   (the page starts DISARMED)" % ("REAL" if real else "MOCK", cam, args.host, args.port), flush=True)
     try:
