@@ -44,6 +44,14 @@ try:
     check("foreign Origin -> 403", post("/api/arm", {"on": True}, dict(good, Origin="http://evil.example"))[0] == 403)
     check("foreign Host (DNS rebinding) -> 403", post("/api/arm", {"on": True}, dict(good, Host="evil.example:%d" % PORT))[0] == 403)
     check("nothing was armed by the refused requests", json.loads(urllib.request.urlopen("http://127.0.0.1:%d/state" % PORT).read())["armed"] is False)
+    for path in ("/", "/state", "/camera.jpg", "/camera.mjpg"):
+        req = urllib.request.Request("http://127.0.0.1:%d%s" % (PORT, path), headers={"Host": "evil.example:%d" % PORT})
+        try:
+            urllib.request.urlopen(req, timeout=3)
+            code_get = 200
+        except urllib.error.HTTPError as e:
+            code_get = e.code
+        check("GET %s with a foreign Host -> 403" % path, code_get == 403)
     code, res = post("/api/arm", {"on": True}, dict(good, Origin="http://127.0.0.1:%d" % PORT))
     check("the page's own request works", code == 200 and res["ok"] and res["result"]["armed"] is True)
 finally:

@@ -70,9 +70,10 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        # every GET too: the camera feed and the robot state must not be readable through DNS rebinding from another site
+        if self.headers.get("Host") not in ALLOWED_HOSTS:
+            return self._send(403, "text/plain", b"forbidden host")
         if self.path in ("/", "/index.html"):
-            if self.headers.get("Host") not in ALLOWED_HOSTS:
-                return self._send(403, "text/plain", b"forbidden host")
             with open(os.path.join(HERE, "static", "index.html"), "rb") as f:
                 return self._send(200, "text/html; charset=utf-8", f.read().replace(b"__TOKEN__", TOKEN.encode()))
         if self.path == "/state":
