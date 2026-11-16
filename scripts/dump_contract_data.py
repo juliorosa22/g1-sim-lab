@@ -24,6 +24,7 @@ parser.add_argument("--checkpoint", required=True)
 parser.add_argument("--out", required=True)
 parser.add_argument("--num_envs", type=int, default=4)
 parser.add_argument("--steps", type=int, default=600)
+parser.add_argument("--walk", action="store_true", help="planner requests for the walking policy v12 (forward walking up to 1.0 m/s, small lateral and yaw) instead of the stand/turn ones")
 parser.add_argument("--seed", type=int, default=7)
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
@@ -50,10 +51,15 @@ REQUESTS = [  # (vx, vy, wz): what a planner might send
     (0.0, 0.0, 0.0), (0.0, 0.0, 0.3), (0.0, 0.0, 0.5), (0.0, 0.0, -0.4), (0.0, 0.0, 1.0), (0.2, 0.0, 0.0), (0.0, 0.2, 0.0),
     (0.03, 0.03, 0.02), (0.04, 0.0, 0.04), (0.3, 0.0, 0.3), (0.4, 0.0, 0.0), (-0.2, 0.0, 0.0), (0.0, 0.0, 0.0),
 ]
+REQUESTS_WALK = [
+    (0.0, 0.0, 0.0), (0.3, 0.0, 0.0), (0.5, 0.0, 0.0), (0.8, 0.0, 0.0), (1.0, 0.0, 0.0), (0.6, 0.0, 0.3), (0.6, 0.0, -0.4), (0.4, 0.2, 0.0),
+    (0.4, -0.2, 0.0), (-0.2, 0.0, 0.0), (0.03, 0.03, 0.02), (0.04, 0.0, 0.04), (0.8, 0.0, 0.5), (0.0, 0.0, 0.0),
+]
 
 
 @torch.inference_mode()
 def main():
+    REQUESTS_USED = REQUESTS_WALK if args.walk else REQUESTS
     device = "cuda:0"
     torch.manual_seed(args.seed)
     cfg = parse_env_cfg(args.task, device=device, num_envs=args.num_envs)
@@ -106,10 +112,10 @@ def main():
         rec["action_next"].append(action_next.cpu().numpy())
         # next planner request (changes every 2 s per env, staggered) and the arms' random reaches
         if step % 100 == 0:
-            req_idx = torch.randint(0, len(REQUESTS), (n,))
+            req_idx = torch.randint(0, len(REQUESTS_USED), (n,))
         elif step % 100 == 50:
-            req_idx = torch.randint(0, len(REQUESTS), (n,))
-        req = torch.tensor([REQUESTS[i] for i in req_idx.tolist()], device=device)
+            req_idx = torch.randint(0, len(REQUESTS_USED), (n,))
+        req = torch.tensor([REQUESTS_USED[i] for i in req_idx.tolist()], device=device)
         goal_cmd = req.clone()
         lin_small = goal_cmd[:, :2].norm(dim=1) < DEADBAND
         goal_cmd[lin_small, :2] = 0.0

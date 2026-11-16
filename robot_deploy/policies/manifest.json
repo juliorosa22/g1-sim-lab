@@ -122,6 +122,47 @@
    },
    "torch": "2.7.0+cu128",
    "onnx_opset": 13
+  },
+  {
+   "file": "walk_v12_20261116",
+   "role": "walk",
+   "version": "v12",
+   "checkpoint": "logs/lab_checkpoints/v12/model_4998.pt",
+   "checkpoint_sha256": "c0f842b5792b86e21e33a4cebd5454a2d2444ab77d91d578790301e77d92003b",
+   "checkpoint_format": "rsl-rl 5.x",
+   "checkpoint_iter": 4998,
+   "obs_size": 78,
+   "action_size": 13,
+   "layers": [
+    [
+     256,
+     78
+    ],
+    [
+     128,
+     256
+    ],
+    [
+     128,
+     128
+    ],
+    [
+     13,
+     128
+    ]
+   ],
+   "activation": "ELU",
+   "exported": "2026-11-16T05:58:28",
+   "onnx_sha256": "580f01fd93bc1682bc5c1eaae512265a96d7d3b0353a2669f78f0c124e1f4441",
+   "npz_sha256": "18e1ee84f9d0798f3c00dc3d23d2d452c4c8fdbd78056d89ca9870e1cbfd68b5",
+   "verification": {
+    "max_abs_err_onnxruntime_vs_torch": 5.7220458984375e-06,
+    "max_abs_err_numpy_vs_torch": 7.62939453125e-06,
+    "max_abs_action": 79.52653503417969,
+    "n_test_vectors": 3200
+   },
+   "torch": "2.7.0+cu128",
+   "onnx_opset": 13
   }
  ]
 }
