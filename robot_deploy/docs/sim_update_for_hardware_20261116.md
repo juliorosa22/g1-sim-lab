@@ -51,6 +51,7 @@ Differences up to 3 points are noise (8 envs per cell). Trained: friction 0.3-1.
 - Yaw command: start at +-0.2 rad/s, then 0.3; a turn needs a hoist that lets the robot rotate.
 
 ## 6. v12 on the robot: not ready for ground walking
+The wiring of v12 and the selector into `run.py` (what to change, guards, tests, order of runs) is `docs/task_runpy_selector_wiring.md`.
 Gating steps I recommend, each needing the user's explicit yes at the time:
 1. Wire the selector and the v12 network into `run.py` as a dry run (computes, sends nothing); check the contract test and the loop timing on the Jetson (0.3 ms per policy call measured for v11).
 2. Hoisted, feet in the air, forward 0.2-0.3 m/s: joint speeds and torques will exceed the standing-era trips more than the turn did; relax the trips with numbers from a new demand table (ask me: `scripts/evaluate_joint_demands.py` has a walking mode to add).
